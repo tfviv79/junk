@@ -33,7 +33,7 @@ def string_display_width(s, encoding="utf-8", unicode_char_type=["W", "F", "A"])
 	return width
 
 def string_shorten(s, width, padding_str=" ", padding_dict="right"
-		, encoding="utf-8", shorten_string="...", **argv):
+		, encoding="utf-8", shorten_string="...", , unicode_char_type=["W", "F", "A"]):
 	""" shorten string for display
 	>>> string_shorten("1234567890", 10)
 	'1234567890'
@@ -46,7 +46,7 @@ def string_shorten(s, width, padding_str=" ", padding_dict="right"
 	shorten_size = 0
 	remain = []
 	size = 0
-     	sh_len = string_display_width(shorten_string, encoding, **argv)
+     	sh_len = string_display_width(shorten_string, encoding, unicode_char_type)
 	for c in s:
 		c_size = char_display_width(c, encoding, **argv)
 		if c_size + size + sh_len <= width:
