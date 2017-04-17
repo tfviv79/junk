@@ -65,7 +65,8 @@ def string_shorten(s, width, padding_str=" ", padding_dict="right"
 		size = shorten_size + sh_len
 	if padding_str is not None:
 		if width - size > 0:
-			padding = " "*(width-size)
+			padding_len = string_display_width(padding_str)
+			padding = padding_str*((width-size)/padding_len)
 			if padding_dict == "right":
 				return ret_str + padding
 			else:
