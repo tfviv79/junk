@@ -1,0 +1,7 @@
+[package]
+name = "sample0003"
+version = "0.1.0"
+authors = ["tfviv79 <tfviv79+github@gmail.com>"]
+
+[dependencies]
+rand = "0.4.*"
