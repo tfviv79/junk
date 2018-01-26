@@ -175,6 +175,12 @@ def checkparser(checker, name=None):
         return s, Result_err("%s is not %s", c.ok, name)
     return Parser(check)
 
+def wrapper(parser):
+    def wrapped_parser(s):
+        print("#### wraped %s"%(s.read(),))
+        return parser().parse(s)
+    return Parser(wrapped_parser)
+
 def many(p):
     def proc(s):
         acc = []
@@ -220,7 +226,7 @@ def maybe(p):
         s, ret = p.parse(s)
         if not ret.flg:
             s = copy_s
-            return s, Result_ok([""])
+            return s, Result_ok("")
         return s, ret
     return Parser(proc)
 
@@ -251,6 +257,16 @@ if __name__ == "__main__":
         print("RESULT:", ret)
     import unittest
 
-    add_op = intp.p(spaces).c(sign).p(spaces).c(intp).flat(1)
+    def _exp():
+        global exp
+        print("###exp", exp)
+        return exp
+    mul = o(char1("*"), char1("/"))
+    term = o(intp, wrapper(_exp))
+    add_op = term.many(spaces.n(mul).p(spaces).c(term))
+    exp = add_op.many(spaces.n(sign).p(spaces).c(add_op))
 
-    testparse(add_op, "-1234567890 + -3")
+    testparse(exp, "-1234567890 + -3")
+    import sys
+    if len(sys.argv) > 1:
+        testparse(exp, sys.argv[1])
