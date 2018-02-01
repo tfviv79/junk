@@ -1,0 +1,5 @@
+[[plugins]]
+repo = 'sebastianmarkow/deoplete-rust'
+
+[[plugins]]
+repo = 'rust-lang/rust.vim'
