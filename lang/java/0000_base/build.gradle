@@ -1,0 +1,30 @@
+plugins {
+    id 'io.franzbecker.gradle-lombok' version '1.11'
+        id 'java'
+ id  'application'
+        }
+        
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+	jcenter()
+}
+
+
+dependencies {
+}
+
+compileJava {
+	options.encoding = 'UTF-8'
+}
+
+mainClassName = 'Main'
+ // gradle run -Pargs="a b c"
+run {
+	if (project.hasProperty("args")) {
+		args(project.args.split('\\s+'))
+	}
+}
+
