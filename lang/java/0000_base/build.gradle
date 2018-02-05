@@ -1,9 +1,18 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.3'
+    }
+}
+
 plugins {
     id 'io.franzbecker.gradle-lombok' version '1.11'
-        id 'java'
- id  'application'
-        }
-        
+    id 'java'
+     id  'application'
+}
+
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
