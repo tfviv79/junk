@@ -10,7 +10,8 @@ buildscript {
 plugins {
     id 'io.franzbecker.gradle-lombok' version '1.11'
     id 'java'
-     id  'application'
+    id 'application'
+    //id 'org.junit.platform.gradle.plugin'
 }
 
 
@@ -23,10 +24,13 @@ repositories {
 
 
 dependencies {
+    testCompile("org.junit.jupiter:junit-jupiter-api:5.*")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.*")
+
 }
 
 compileJava {
-	options.encoding = 'UTF-8'
+    options.encoding = 'UTF-8'
 }
 
 mainClassName = 'Main'
