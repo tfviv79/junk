@@ -3,17 +3,22 @@ buildscript {
         jcenter()
     }
     dependencies {
+        // task junitPlatform
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.3'
     }
+    //plugins {
+    //    id 'junit-plat-form-gradel-plugin'
+    //}
 }
+
 
 plugins {
     id 'io.franzbecker.gradle-lombok' version '1.11'
     id 'java'
     id 'application'
-    //id 'org.junit.platform.gradle.plugin'
 }
 
+apply plugin: 'org.junit.platform.gradle.plugin'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -24,9 +29,8 @@ repositories {
 
 
 dependencies {
-    testCompile("org.junit.jupiter:junit-jupiter-api:5.*")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.*")
-
+    testCompile("org.junit.jupiter:junit-jupiter-api:5.0.3")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.0.3")
 }
 
 compileJava {
@@ -40,4 +44,6 @@ run {
 		args(project.args.split('\\s+'))
 	}
 }
+
+
 
