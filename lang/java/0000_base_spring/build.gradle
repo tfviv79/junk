@@ -1,0 +1,29 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '1.5.10.RELEASE'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = """spring-java-sample"""
+
+tasks.withType(JavaCompile) {
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+	options.encoding = 'UTF-8'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile('org.springframework.boot:spring-boot-starter-groovy-templates')
+    compile('org.springframework.boot:spring-boot-starter-thymeleaf')
+    compile('org.springframework.boot:spring-boot-starter-security')
+    testCompile('org.springframework.boot:spring-boot-starter-test') {
+        exclude(module: 'commons-logging')
+    }
+}
+
