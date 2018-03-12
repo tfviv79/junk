@@ -1,0 +1,8 @@
+* DESC: base application for rustlang development.
+
+* base application
+    A base application skeleton.
+    Made by
+        cargo new --bin --vcs git --color auto --name base 0000_base
+
+* purpose

@@ -1,0 +1,6 @@
+[package]
+name = "base"
+version = "0.1.0"
+authors = ["t<t@localhost>"]
+
+[dependencies]
