@@ -1,4 +1,4 @@
-* base line for base cui application with java.
+* DESC: base line for base cui application with java.
 
 * construct modules.
   - lombok
