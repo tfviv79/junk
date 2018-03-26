@@ -1,7 +1,21 @@
-plugins {
-	id 'java'
-	id 'org.springframework.boot' version '1.5.10.RELEASE'
+buildscript {
+	ext {
+		springBootVersion = '2.0.0.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
 }
+plugins {
+	id 'org.springframework.boot' version '2.0.0.RELEASE'
+	id 'java'
+	id 'eclipse'
+}
+
+apply plugin: 'io.spring.dependency-management'
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
@@ -15,17 +29,45 @@ tasks.withType(JavaCompile) {
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
-    compile('org.springframework.boot:spring-boot-starter-web')
-    compile('org.springframework.boot:spring-boot-starter-groovy-templates')
-    compile('org.springframework.boot:spring-boot-starter-thymeleaf')
-    compile('org.springframework.boot:spring-boot-starter-security')
-    compile('org.springframework.boot:spring-boot-devtools')
-    compile('org.springframework.boot:spring-boot-actuator')
+    compile("org.springframework.boot:spring-boot-starter-web")
+	compile('org.springframework.boot:spring-boot-starter-groovy-templates')
+	compile('org.springframework.boot:spring-boot-starter-security')
+	compile('org.springframework.boot:spring-boot-starter-validation')
+	compile('org.mybatis.spring.boot:mybatis-spring-boot-starter:1.3.2')
+	compile('org.springframework.session:spring-session-core')
+	runtime('org.springframework.boot:spring-boot-devtools')
+	runtime('com.h2database:h2')
+	compileOnly('org.projectlombok:lombok')
     testCompile('org.springframework.boot:spring-boot-starter-test') {
         exclude(module: 'commons-logging')
     }
+	testCompile('org.springframework.security:spring-security-test')
 }
 
+
+
+// ファイルのコピー先(カレントからの相対PATH)
+def dependJarCopyTo = 'jar'
+// コピー先にあるファイルをいったん削除
+task delDependJar << {
+    delete dependJarCopyTo
+}
+// 依存するライブラリjarを指定したディレクトリにコピーする
+task getDependJar(dependsOn: delDependJar) {
+    doLast {
+        configurations.compile.each {
+            def fromJarFile = it.absolutePath
+                copy {
+                    from fromJarFile
+                        into dependJarCopyTo
+                }
+        }
+        println "----- 以下のjarファイルを取得しました -----"
+            FileCollection copyFiles = files { file(dependJarCopyTo).listFiles() }
+        copyFiles.each {File file -> println file.name}
+    } 
+} 
