@@ -53,7 +53,7 @@ dependencies {
 // ファイルのコピー先(カレントからの相対PATH)
 def dependJarCopyTo = 'jar'
 // コピー先にあるファイルをいったん削除
-task delDependJar << {
+task delDependJar doLast {
     delete dependJarCopyTo
 }
 // 依存するライブラリjarを指定したディレクトリにコピーする
