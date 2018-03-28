@@ -7,3 +7,7 @@ import chainer.functions as F
 import chainer.links as L
 from chainer.training import extensions
 
+from chainer import report
+from chainer.datasets import tuple_dataset
+
+
