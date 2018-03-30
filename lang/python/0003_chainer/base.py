@@ -9,5 +9,7 @@ from chainer.training import extensions
 
 from chainer import report
 from chainer.datasets import tuple_dataset
-
+import matplotlib as mpl
+mpl.use("Agg")
+import matplotlib.pyplot as plt
 

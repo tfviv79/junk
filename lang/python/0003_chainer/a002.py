@@ -32,7 +32,6 @@ class LossFuncL(Chain):
         super(LossFuncL, self).__init__(predictor=predictor)
 
     def __call__(self, x, t):
-        print(x)
         x.data = x.data.reshape((-1, 1)).astype(np.float32)
         t.data = t.data.reshape((-1, 1)).astype(np.float32)
 
