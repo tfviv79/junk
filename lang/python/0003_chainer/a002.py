@@ -131,22 +131,22 @@ test_iter  = LSTM_test_Iterator(test,  batch_size = 10, seq_len = 10, repeat = F
 updater = LSTM_updater(train_iter, optimizer, -1)
 trainer = training.Trainer(updater, (1000, 'epoch'), out = 'result')
 
-eval_model = model.copy()
-eval_rnn = eval_model.predictor
-eval_rnn.train = False
-trainer.extend(extensions.Evaluator(
-        test_iter, eval_model, device=-1,
-                eval_hook=lambda _: eval_rnn.reset_state()))
-
-trainer.extend(extensions.LogReport())
-
-trainer.extend(
-        extensions.PrintReport(
-                ['epoch', 'main/loss', 'validation/main/loss']
-                            )
-                )
-
-trainer.extend(extensions.ProgressBar())
+## eval_model = model.copy()
+## eval_rnn = eval_model.predictor
+## eval_rnn.train = False
+## trainer.extend(extensions.Evaluator(
+##         test_iter, eval_model, device=-1,
+##                 eval_hook=lambda _: eval_rnn.reset_state()))
+## 
+## trainer.extend(extensions.LogReport())
+## 
+## trainer.extend(
+##         extensions.PrintReport(
+##                 ['epoch', 'main/loss', 'validation/main/loss']
+##                             )
+##                 )
+## 
+## trainer.extend(extensions.ProgressBar())
 
 trainer.run()
 
@@ -157,6 +157,11 @@ model.predictor.reset_state()
 for i in range(presteps):
     y = model.predictor(chainer.Variable(np.roll(x_train,i).reshape((-1,1))))
 
-#plt.plot(t[:N_train],np.roll(y.data,-presteps))
-#plt.plot(t[:N_train],x_train)
-#plt.show()
+if False:
+    print(np.roll(y.data, -presteps))
+    print(x_train)
+else:
+    plt.plot(t[:N_train],np.roll(y.data,-presteps))
+    plt.plot(t[:N_train],x_train)
+    plt.savefig("i{0}.png".format(presteps))
+    ### plt.show()
