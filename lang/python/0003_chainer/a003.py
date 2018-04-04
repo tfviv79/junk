@@ -8,7 +8,7 @@ from base import *
 
 
 class MLP(Chain):
-    n_input = 1
+    n_input = 10
     n_output = 1
     n_units = 5
 
@@ -160,13 +160,15 @@ trainer = training.Trainer(updater, (1000, 'epoch'), out = 'result')
 trainer.run()
 
 
-presteps = 300
+presteps = 10
 model.predictor.reset_state()
 
 for i in range(presteps):
     y = model.predictor(chainer.Variable(np.roll(x_train,i).reshape((-1,1))))
 
-if False:
+switch_flg = False
+switch_flg = True
+if switch_flg:
     print(np.roll(y.data, -presteps))
     print(x_train)
 else:
