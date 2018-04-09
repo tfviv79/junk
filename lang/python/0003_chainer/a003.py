@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 """
 https://qiita.com/chachay/items/052406176c55dd5b9a6a
+
+https://play.chainer.org/book/1/3/2
+
 """
 
+import sys
 
 from base import *
 
 
 class MLP(Chain):
-    n_input = 10
+    n_input = 1
     n_output = 1
     n_units = 5
 
@@ -120,59 +124,83 @@ in_data = pd.read_csv("testdata/USD_JPY_move_avg.csv",
     )
 
 N_data = len(in_data)
-N_Loop = 3
-t = in_data.date
 
-X = in_data.ask 
+def pdata(X, start, length):
+    tmp_DataSet_X = Variable(np.array(X[start:start + length]).reshape((-1, 1)).astype(np.float32))
+    start = start + 1
+    tmp_DataSet_Y = Variable(np.array(X[start:start + length]).reshape((-1, 1)).astype(np.float32))
+    return tmp_DataSet_X, tmp_DataSet_Y
 
-N_train = int(N_data*0.8)
-N_test  = N_data - N_train
-tmp_DataSet_X = np.array(X).astype(np.float32)
-x_train = np.array(tmp_DataSet_X[:N_train])
-x_test  = np.array(tmp_DataSet_X[N_train:])
+def atrain(start, length):
+    x, t = pdata(in_data.ask, start, length)
+    y = model(x, t)
+    model.predictor.cleargrads()
+    y.backward()
+    optimizer.update()
+    return t, y, model(x, t)
 
-train = tuple_dataset.TupleDataset(x_train)
-test  = tuple_dataset.TupleDataset(x_test)
+def main(argv):
+    N_Loop = 3
+    t = in_data.date
 
-train_iter = LSTM_test_Iterator(train, batch_size = 10, seq_len = 10)
-test_iter  = LSTM_test_Iterator(test,  batch_size = 10, seq_len = 10, repeat = False)
+    X = in_data.ask 
 
-updater = LSTM_updater(train_iter, optimizer, -1)
-trainer = training.Trainer(updater, (1000, 'epoch'), out = 'result')
+    N_train = int(N_data*0.8)
+    N_test  = N_data - N_train
+    tmp_DataSet_X = np.array(X).astype(np.float32)
+    x_train = np.array(tmp_DataSet_X[:N_train])
+    x_test  = np.array(tmp_DataSet_X[N_train:])
 
-## eval_model = model.copy()
-## eval_rnn = eval_model.predictor
-## eval_rnn.train = False
-## trainer.extend(extensions.Evaluator(
-##         test_iter, eval_model, device=-1,
-##                 eval_hook=lambda _: eval_rnn.reset_state()))
-## 
-## trainer.extend(extensions.LogReport())
-## 
-## trainer.extend(
-##         extensions.PrintReport(
-##                 ['epoch', 'main/loss', 'validation/main/loss']
-##                             )
-##                 )
-## 
-## trainer.extend(extensions.ProgressBar())
+    train = tuple_dataset.TupleDataset(x_train)
+    test  = tuple_dataset.TupleDataset(x_test)
 
-trainer.run()
+    train_iter = LSTM_test_Iterator(train, batch_size = 10, seq_len = 10)
+    test_iter  = LSTM_test_Iterator(test,  batch_size = 10, seq_len = 10, repeat = False)
+
+    updater = LSTM_updater(train_iter, optimizer, -1)
+    trainer = training.Trainer(updater, (1000, 'epoch'), out = 'result')
+
+    ## eval_model = model.copy()
+    ## eval_rnn = eval_model.predictor
+    ## eval_rnn.train = False
+    ## trainer.extend(extensions.Evaluator(
+    ##         test_iter, eval_model, device=-1,
+    ##                 eval_hook=lambda _: eval_rnn.reset_state()))
+    ## 
+    ## trainer.extend(extensions.LogReport())
+    ## 
+    ## trainer.extend(
+    ##         extensions.PrintReport(
+    ##                 ['epoch', 'main/loss', 'validation/main/loss']
+    ##                             )
+    ##                 )
+    ## 
+    ## trainer.extend(extensions.ProgressBar())
+
+    trainer.run()
 
 
-presteps = 10
-model.predictor.reset_state()
+    presteps = 10
+    model.predictor.reset_state()
 
-for i in range(presteps):
-    y = model.predictor(chainer.Variable(np.roll(x_train,i).reshape((-1,1))))
+    for i in range(presteps):
+        y = model.predictor(chainer.Variable(np.roll(x_train,i).reshape((-1,1))))
 
-switch_flg = False
-switch_flg = True
-if switch_flg:
-    print(np.roll(y.data, -presteps))
-    print(x_train)
-else:
-    plt.plot(t[:N_train],np.roll(y.data,-presteps))
-    plt.plot(t[:N_train],x_train)
-    plt.savefig("fig/a003_{0}.png".format(presteps))
-    ### plt.show()
+    switch_flg = False
+    switch_flg = True
+    if switch_flg:
+        print(np.roll(y.data, -presteps))
+        print(x_train)
+    else:
+        plt.plot(t[:N_train],np.roll(y.data,-presteps))
+        plt.plot(t[:N_train],x_train)
+        plt.savefig("fig/a003_{0}.png".format(presteps))
+        ### plt.show()
+    
+def reload():
+    import importlib
+    importlib.reload(a003)
+
+ 
+if __name__ == "__main__":
+    main(sys.argv)
