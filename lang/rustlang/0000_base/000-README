@@ -6,3 +6,11 @@
         cargo new --bin --vcs git --color auto --name base 0000_base
 
 * purpose
+
+
+* example command line of cargo
+	cargo doc
+	cargo run --example ex1
+	cargo build 
+	cargo bench
+	cargo test
