@@ -1,0 +1,6 @@
+[package]
+name = "box_sample"
+version = "0.1.0"
+authors = ["tfviv79 <tfviv79+github@gmail.com>"]
+
+[dependencies]
