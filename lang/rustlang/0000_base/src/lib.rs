@@ -5,6 +5,15 @@
 //! ```
 
 
+macro_rules! ignore {
+	($x:expr) => {
+		{
+			let _ = $x;
+			()
+		}
+	}
+}
+
 
 /// samples function
 /// ```
