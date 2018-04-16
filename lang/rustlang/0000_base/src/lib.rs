@@ -5,6 +5,15 @@
 //! ```
 
 
+macro_rules! ignore {
+	($x:expr) => {
+		{
+			let _ = $x;
+			()
+		}
+	}
+}
+
 
 /// samples function
 /// ```
@@ -12,7 +21,7 @@
 /// assert_eq!(version(), "0.0.1")
 /// ```
 pub fn version<'a>() -> &'a str {
-	"0.0.1"
+    "0.0.1"
 }
 
 #[cfg(test)]

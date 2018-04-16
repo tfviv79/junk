@@ -8,5 +8,5 @@ use test::Bencher;
 
 #[bench]
 fn bench_version(b: &mut Bencher) {
-	b.iter(|| version());
+    b.iter(|| version());
 }
