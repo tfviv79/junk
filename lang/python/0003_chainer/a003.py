@@ -20,15 +20,18 @@ class MLP(Chain):
         super(MLP, self).__init__(
             l1 = L.Linear(self.n_input, self.n_units),
             l2 = L.LSTM(self.n_units, self.n_units),
+            l2_ = L.LSTM(self.n_units, self.n_units),
             l3 = L.Linear(self.n_units, self.n_output),
             )
 
     def reset_state(self):
         self.l2.reset_state()
+        self.l2_.reset_state()
 
     def __call__(self, x):
         h1 = self.l1(x)
-        h2 = self.l2(h1)
+        h2_ = self.l2(h1)
+        h2 = self.l2_(h1)
         return self.l3(h2)
 
 class LossFuncL(Chain):
