@@ -1,0 +1,8 @@
+* DESC: rustlang feature samples
+
+* each directories
+** 0001_box_sample
+    box notation sample (in unstable feature @[2018-05-08 03:43:30])
+** 0002_ret_impl
+    return by trait impl
+
