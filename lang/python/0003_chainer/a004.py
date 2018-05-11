@@ -119,7 +119,7 @@ def apply_model(model, x_data):
     h = model(x)
     return h
 
-def run(model, optimizer, data=data_and, n=100):
+def run(model, optimizer, data, n=100):
     optimizer.setup(model)
     for i, o in data*n:
         model.train(optimizer, i, o)
@@ -158,4 +158,4 @@ data_xor = [
 
 if __name__ == "__main__":
     optimizer = optimizers.MomentumSGD(lr=0.01, momentum=0.9)
-    run(1000)
+    r(1, data_xor)
