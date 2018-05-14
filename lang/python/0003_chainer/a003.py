@@ -157,11 +157,11 @@ def main(argv):
     train = tuple_dataset.TupleDataset(x_train)
     test  = tuple_dataset.TupleDataset(x_test)
 
-    train_iter = LSTM_test_Iterator(train, batch_size = 10, seq_len = 10)
+    train_iter = LSTM_test_Iterator(train, batch_size = 2000, seq_len = 10)
     test_iter  = LSTM_test_Iterator(test,  batch_size = 10, seq_len = 10, repeat = False)
 
     updater = LSTM_updater(train_iter, optimizer, -1)
-    trainer = training.Trainer(updater, (1000, 'epoch'), out = 'result')
+    trainer = training.Trainer(updater, (2000, 'epoch'), out = 'result')
 
     ## eval_model = model.copy()
     ## eval_rnn = eval_model.predictor
@@ -190,7 +190,6 @@ def main(argv):
         y = model.predictor(chainer.Variable(np.roll(x_train,i).reshape((-1,1))))
 
     switch_flg = False
-    switch_flg = True
     if switch_flg:
         print(np.roll(y.data, -presteps))
         print(x_train)
