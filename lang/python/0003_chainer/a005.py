@@ -13,6 +13,7 @@ class MLP(Chain):
             i1 = L.Linear(self.n_input, self.n_units),
             l1 = L.LSTM(self.n_units, self.n_units),
             l2 = L.LSTM(self.n_units, self.n_units),
+            l3 = L.LSTM(self.n_units, self.n_units),
             o1 = L.Linear(self.n_units, self.n_output),
             )
 
@@ -22,14 +23,19 @@ class MLP(Chain):
 
     def __call__(self, x):
         h1 = self.i1(x)
-        h2 = self.l1(h1)
-        h3 = self.l2(h2)
-        h4 = self.o1(h3)
+        ld = h1
+        for l in [
+                self.l1
+                , self.l2
+                #, self.l3
+                ]:
+            ld = l(ld)
+        h4 = self.o1(ld)
         return h4
 
     def train(self, optimizer, x_data, y_data):
-        x = Variable(x_data.reshape(1, 9).astype(np.float32))
-        y = Variable(y_data.reshape(1, 1).astype(np.float32))
+        x = Variable(x_data.reshape(1, MLP.n_input).astype(np.float32))
+        y = Variable(y_data.reshape(1, MLP.n_output).astype(np.float32))
         h = self(x)
 
         self.cleargrads()
@@ -38,7 +44,7 @@ class MLP(Chain):
         optimizer.update()
 
 def apply_model(model, x_data):
-    x = Variable(x_data.reshape(1, 9).astype(np.float32))
+    x = Variable(x_data.reshape(1, MLP.n_input).astype(np.float32))
     h = model(x)
     return h
 
@@ -90,7 +96,7 @@ def out_data(t, x_train, y, suffix):
     plt.savefig("fig/a005_{0}.png".format(suffix))
 
 def main(trainnum=5, md=None):
-    return r(atrain(0, 9), n=trainnum, model=md)
+    return r(atrain(0, MLP.n_input), n=trainnum, model=md)
 
 if __name__ == "__main__":
     main()
