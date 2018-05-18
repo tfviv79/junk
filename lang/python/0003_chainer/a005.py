@@ -63,9 +63,12 @@ in_data = pd.read_csv("testdata/USD_JPY_move_avg.min.csv",
     )
 
 def pdata(X, start, length):
-    tmp_DataSet_X = (np.array(X[start:start + length]).reshape((-1, 1)).astype(np.float32))
-    start = start + 1
-    tmp_DataSet_Y = (np.array(X[start + length - 1:start + length]).reshape((-1, 1)).astype(np.float32))
+    end_pos = start + length
+    v_x = np.array(X[start:end_pos]) - np.array(X[start+1:end_pos + 1])
+    tmp_DataSet_X = v_x.reshape((-1, 1)).astype(np.float32)
+
+    v_y = np.array(X[end_pos:end_pos + 1]) - np.array(X[end_pos+1 : end_pos + 2])
+    tmp_DataSet_Y = v_y.reshape((-1, 1)).astype(np.float32)
     return tmp_DataSet_X, tmp_DataSet_Y
 
 def atrain(start, length):
