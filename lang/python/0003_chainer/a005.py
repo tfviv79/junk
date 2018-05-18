@@ -34,6 +34,7 @@ class MLP(Chain):
         return h4
 
     def train(self, optimizer, x_data, y_data):
+        self.reset_state()
         x = Variable(x_data.reshape(1, MLP.n_input).astype(np.float32))
         y = Variable(y_data.reshape(1, MLP.n_output).astype(np.float32))
         h = self(x)
@@ -50,8 +51,9 @@ def apply_model(model, x_data):
 
 def run(model, optimizer, data, n=100):
     optimizer.setup(model)
-    for i, o in data:
-        model.train(optimizer, i, o)
+    for nth in range(n):
+        for i, o in data:
+            model.train(optimizer, i, o)
 
 in_data = pd.read_csv("testdata/USD_JPY_move_avg.min.csv",
     names=["date", "cur", "ask", "bid", "mv_ask", "mv_bid"
