@@ -101,7 +101,8 @@ def out_data(t, x_train, y, suffix):
     plt.savefig("fig/a005_{0}.png".format(suffix))
 
 def main(trainnum=5, md=None):
-    return r(atrain(0, MLP.n_input), n=trainnum, model=md)
+    data = atrain(0, MLP.n_input)
+    return r(data, n=trainnum, model=md), data
 
 if __name__ == "__main__":
     main()
