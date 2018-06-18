@@ -1,0 +1,10 @@
+[package]
+name = "crawler"
+version = "0.1.0"
+authors = ["tfviv79 <tfviv79+github@gmail.com>"]
+
+[dependencies]
+reqwest = "0.8.*"
+scraper = "0.6.*"
+rusqlite = "0.11.0"
+#select.rs ?
