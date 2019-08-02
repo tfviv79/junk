@@ -1,7 +1,7 @@
 Param(
 )
 
-function bk_file()
+function bk_file() {
     param (
         [Parameter(Mandatory=$true)][string] $filename
     )

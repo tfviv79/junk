@@ -17,7 +17,7 @@ if ( Test-Path "$destDir") {
 
 New-Item -ItemType Directory -Path "$destDir" | Out-Null
 
-if (!$issimple)) {
+if (!$issimple) {
     Get-Children -Recurse "$tmplDir" | sort | ForEach-Object -Process {
         $fname = $_.FullName
         $destFname = $fname.SubString($tmplDir.Length)
