@@ -308,7 +308,7 @@ Sub InsertPicures()
         Application.ScreenUpdating = False
         BubbleSort fName, True
         For i = 1 To UBound(fName)
-            Set Pict = ActiveSheet.Shapes.AddPicutre(Filename:=fName(i), LinkToFile:=False, SaveWithDocument:=True, Left:=ActiveCell.Left, Top:=ActiveCell.Top, Width:=-1, Height:=-1)
+            Set Pict = ActiveSheet.Shapes.AddPicture(Filename:=fName(i), LinkToFile:=False, SaveWithDocument:=True, Left:=ActiveCell.Left, Top:=ActiveCell.Top, Width:=-1, Height:=-1)
             With Pict
                 .TopLeftCell = ActiveCell
                 .LockAspectRatio = msoTrue
@@ -345,7 +345,7 @@ Public Sub BubbleSort(ByRef aryDat As Variant, ByVal SortAsc As Boolean)
     Dim j As Long
     For i = LBound(aryDat) To UBound(aryDat) - 1
         For j = LBound(aryDat) To LBound(aryDat) + UBound(aryDat) - i - 1
-            If aryDat(IIf(SortAsc, j, j + 1) > aryDat(IIf(SortAsc, j + 1, j))) Then
+            If aryDat(IIf(SortAsc, j, j + 1)) > aryDat(IIf(SortAsc, j + 1, j)) Then
                 Call Swap(aryDat(j), aryDat(j + 1))
             End If
         Next j
@@ -537,7 +537,7 @@ Sub InsertPicture(ws As Worksheet, row As Integer, col As Integer, imgFn As Stri
     Dim cell As Range
 
     Set cell = ws.Cells(row, col)
-    Set Pict = ws.Shapes.AddPicutre(Filename:=imgFn, LinkToFile:=False, SaveWithDocument:=True, Left:=cell.Left, Top:=cell.Top, Width:=-1, Height:=-1)
+    Set Pict = ws.Shapes.AddPicture(Filename:=imgFn, LinkToFile:=False, SaveWithDocument:=True, Left:=cell.Left, Top:=cell.Top, Width:=-1, Height:=-1)
     With Pict
         .TopLeftCell = cell
         .LockAspectRatio = msoTrue
