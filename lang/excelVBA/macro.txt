@@ -1,0 +1,630 @@
+Option Explicit
+
+Sub Macro1()
+    Dim mode As String
+    
+    mode = ThisWorkbook.Sheets("設定").Range("B2").Value
+    
+    Select Case mode
+    Case "SQL生成"
+        Call CreateSql
+    Case "画像貼り付け"
+        Call InsertPicures
+    Case ""
+    MsgBox "機能です:" & mode, vbInformation
+    Case Else
+        MsgBox "有効でない機能です:" & mode, vbInformation
+    End Select
+
+End Sub
+
+
+' template for processing selectoin
+Sub ProcSelection()
+    Dim arange As Range
+    Dim wsheet As Worksheet
+    Dim wbook As Workbook
+
+    Dim posCol As Integer, posRow As Integer
+    Dim posMaxCol As Integer, posMaxRow As Integer
+    Dim i As Integer, j As Integer
+    Dim wi As Integer, wj As Integer
+    Dim sheetname As String
+    Dim val As String
+    Dim wcol As Range
+    Dim wrow As Range
+
+    Set arange = ActiveWindow.RangeSelection
+    posCol = arange.Column
+    posRow = arange.row
+    posMaxCol = arange.Cells(arange.Count).Column
+    posMaxRow = arange.Cells(arange.Count).row
+    Set wbook = Application.ActiveWorkbook
+    sheetname = "Work9999"
+    If Not existsSheet(wbook, sheetname) Then
+        Set wsheet = wbook.Worksheets.Add()
+    Else
+        Set wsheet = wbook.Sheets(sheetname)
+    End If
+
+    For i = 1 To posMaxRow - posRow + 1
+        Set wrow = wsheet.Cells(i + 1, 1)
+        wj = wrow.Value
+
+        For j = 1 To posMaxCol - posCol + 1
+            Set wcol = wsheet.Cells(1, j + 1)
+            wi = wcol.Value
+            ' Write Concern process
+            ' Debug.Print arange.Cells(i, j).Address
+
+            val = arange.Cells(i, j).Tet
+            If val <> "" And val <> "1" And val <> "0" Then
+                wsheet.Cells(wi + 2, j + 1).Value = val
+                wcol.Value = wi + 1
+            End If
+            ' End concern process
+        Next j
+    Next i
+End Sub
+
+Sub CreateSql()
+    ' create sql for selected region.
+    ' 1col: created sql
+    ' 2col-: data
+    '   2col : ■ -> target table. * -> target data row
+    '   3col : data ( null, SYSTIMESTAMP is special value)
+    ' [ ] row(1st row) : 3col: table name, 4col: physical table name
+    ' 2row: colname
+    ' 3row: colname en
+    ' 4row: type
+    ' 5row: data
+    Dim arange As Range
+    Dim wsheet As Worksheet
+    Dim wbook As Workbook
+
+    Dim posCol As Integer, posRow As Integer
+    Dim posMaxRow As Integer, posMaxCol As Integer
+    Dim i As Integer, j As Integer
+    Dim wi As Integer, wj As Integer
+    Dim sheetname As String
+    Dim val As String
+    Dim tblNm As String
+    Dim colNmList As String
+    Dim colNum As Integer
+    Dim colType As String
+    Dim colTypeMap As Object
+    Dim colValList As String
+    Dim wcol As Range
+    Dim wrow As Range
+    
+    Set arange = ActiveWindow.RangeSelection
+    posCol = arange.Column
+    posRow = arange.row
+    posMaxRow = arange.Cells(arange.Count).row
+    Set wsheet = ActiveWorkbook.ActiveSheet
+
+    For i = 1 To posMaxRow - posRow + 1
+        wi = posRow - 1
+        val = wsheet.Cells(wi + i, posCol + 1).Text
+        If val = "■" Then
+            tblNm = wsheet.Cells(wi + i, posCol + 2).Text
+            Set colTypeMap = CreateObject("Scripting.Dictionary")
+            j = 1
+            i = i + 2
+            Dim colNm As String
+            colNmList = ""
+            colNm = wsheet.Cells(wi + i, posCol + 1 + j)
+            colType = wsheet.Cells(wi + i + 1, posCol + 1 + j)
+            colNum = 0
+            Do While colNm <> ""
+                colNum = colNum + 1
+                If j <> 1 Then
+                    colNmList = colNmList & ","
+                End If
+                colNmList = colNmList & colNm
+                If InStr(colType, "NUMBER") = 1 Then
+                    Call colTypeMap.Add(colNum, "NUMBER")
+                ElseIf InStr(colType, "TIMESTAMP") = 1 Then
+                    Call colTypeMap.Add(colNum, "TIMESTAMP")
+                Else
+                    Call colTypeMap.Add(colNum, colType)
+                End If
+                j = j + 1
+                colNm = wsheet.Cells(wi + i, posCol + 1 + j)
+                colType = wsheet.Cells(wi + i + 1, posCol + 1 + j)
+            Loop
+            i = i + 1
+        ElseIf val = "●" Then
+            Dim colVal As String
+            colValList = ""
+            For j = 1 To colNum
+                colVal = wsheet.Cells(wi + i, posCol + 1 + j)
+                If j <> 1 Then
+                    colValList = colValList & ","
+                End If
+                colType = colTypeMap.Item(j)
+                If colVal = "null" Or colVal = "NULL" Then
+                    colValList = colValList & colVal
+                ElseIf colVal = "SYSTIMESTAMP" Then
+                    colValList = colValList & colVal
+                ElseIf colType = "NUMBER" Then
+                    colValList = colValList & colVal
+                ElseIf colType = "TIMESTAMP" Then
+                    colValList = colValList & "to_timestamp('" & colVal & "', 'YYYY-MM-DD HH24:MI:SSXFF')"
+                Else
+                    colValList = colValList & "'" & colVal & "'"
+                End If
+            Next j
+            Set wcol = wsheet.Cells(wi + i, posCol)
+            wcol.Value = createInsertSQL(tblNm, colNmList, colValList)
+        End If
+    Next i
+    MsgBox "Created SQL.", vbInformation
+End Sub
+
+
+Function createInsertSQL(tblNm As String, colNmList As String, colValList As String)
+    Dim val As String
+    val = "INSERT INTO " & tblNm & "(" & colNmList & ") VALUES ( " & colValList & ");"
+    createInsertSQL = val
+End Function
+
+
+' 隙間の空いた行を削除してくれるサブルーチン
+Sub VerticalSpaceCompaction()
+    Dim arange As Range
+    Dim wsheet As Worksheet
+    Dim wbook As Workbook
+
+    Dim posCol As Integer, posRow As Integer
+    Dim posMaxCol As Integer, posMaxRow As Integer
+    Dim i As Integer, j As Integer
+    Dim wi As Integer, wj As Integer
+    Dim sheetname As String
+    Dim val As String
+    Dim wcol As Range
+    Dim wrow As Range
+
+    Set arange = ActiveWindow.RangeSelection
+    posCol = arange.Column
+    posRow = arange.row
+    posMaxCol = arange.Cells(arange.Count).Column
+    posMaxRow = arange.Cells(arange.Count).row
+    Set wbook = Application.ActiveWorkbook
+    sheetname = "Work9999"
+    If Not existsSheet(wbook, sheetname) Then
+        Set wsheet = wbook.Worksheets.Add()
+    Else
+        Set wsheet = wbook.Sheets(sheetname)
+    End If
+
+    For i = 1 To posMaxRow - posRow + 1
+        Set wrow = wsheet.Cells(i + 1, 1)
+        wj = wrow.Value
+
+        For j = 1 To posMaxCol - posCol + 1
+            Set wcol = wsheet.Cells(1, j + 1)
+            wi = wcol.Value
+            If val <> "" Then
+                ' Debug.Print "Out:"&wsheet.Cells(wi+2, j+1).Address
+                wsheet.Cells(wi + 2, j + 1).Value = val
+                wcol.Value = wi + 1
+            End If
+        Next j
+    Next i
+End Sub
+
+ 
+' 票を元にシート作成する
+Sub CreateTestSheet(ByRef subTitle As String, ByRef titleOffset As Integer)
+    Dim arange As Range
+    Dim wsheet As Worksheet
+    Dim lastSheet As Worksheet
+    Dim wbook As Workbook
+
+    Dim posCol As Integer, posRow As Integer
+    Dim posMaxCol As Integer, posMaxRow As Integer
+    Dim i As Integer, j As Integer
+    Dim tmp As Variant
+    Dim FlgSheetAlreadyExists As Boolean
+
+    Set arange = ActiveWindow.RangeSelection
+    posCol = arange.Column
+    posRow = arange.row
+    posMaxCol = arange.Cells(arange.Count).Column
+    posMaxRow = arange.Cells(arange.Count).row
+    Set wbook = Application.ActiveWorkbook
+
+    For i = posRow To posMaxRow
+        Dim num As String
+        Dim name As String
+        Dim title As String
+        Dim nwsheet As Worksheet
+
+        name = wsheet.Cells(i, 2 + posCol).Text
+        If name <> "" Then
+            num = wsheet.Cells(i, posCol).Text
+            title = wsheet.Cells(i + titleOffset, 8 + posCol).Text
+            Dim sheetname As String
+            name = Split(name, vbLf)(0)
+            tmp = Split(title, vbLf)
+            If UBound(tmp) >= 1 Then
+                title = tmp(1)
+            Else
+                title = tmp(0)
+            End If
+
+            FlgSheetAlreadyExists = False
+            sheetname = num & "." & name
+            If Not existsSheet(wbook, sheetname) Then
+                Set nwsheet = wbook.Worksheets.Add(After:=lastSheet)
+                nwsheet.name = sheetname
+            Else
+                Set nwsheet = wbook.Worksheets(sheetname)
+                FlgSheetAlreadyExists = True
+            End If
+            nwsheet.Cells(1, 1).Value = title
+            If Not FlgSheetAlreadyExists Then
+                nwsheet.Cells(3, 1).Value = subTitle
+                With nwsheet.Cells(3, 1).Value
+                    .Size = 14
+                    .Bold = True
+                End With
+            End If
+
+            Set lastSheet = nwsheet
+
+            Call putSheetLink(nwsheet, sheetname, i, posCol)
+        End If
+    Next i
+End Sub
+
+Sub putSheetLink(wsheet As Worksheet, sheetname As String, row As Integer, col As Integer)
+    Dim linkCell As Range
+    Set linkCell = wsheet.Cells(row, col + 64)
+    linkCell.Value = sheetname
+    wsheet.Hyperlinks.Add Anchor:=linkCell, Address:="", SubAddress:= _
+        "'" & sheetname & "'!A1", TextToDisplay:=sheetname
+End Sub
+
+Function existsSheet(wb As Excel.Workbook, name As String)
+    Dim sh As Excel.Worksheet
+
+    On Error Resume Next
+    Set sh = wb.Sheets(name)
+    On Error GoTo 0
+    existsSheet = Not sh Is Nothing
+End Function
+
+ 
+' 選択ファイル画像をシートに張り付ける
+Sub InsertPicures()
+    Dim fName As Variant
+    Dim i As Long
+    Dim Pict As Shape
+
+    fName = Application.GetOpenFilename("imageFiles,*.jpg;*.png,JPGFILE,*.jpg,PNGFILE,*.PNG,all,*.*", MultiSelect:=True)
+    If IsArray(fName) Then
+        Application.ScreenUpdating = False
+        BubbleSort fName, True
+        For i = 1 To UBound(fName)
+            Set Pict = ActiveSheet.Shapes.AddPicture(Filename:=fName(i), LinkToFile:=False, SaveWithDocument:=True, Left:=ActiveCell.Left, Top:=ActiveCell.Top, Width:=-1, Height:=-1)
+            With Pict
+                .TopLeftCell = ActiveCell
+                .LockAspectRatio = msoTrue
+                '.ShapeRange.Height = ActiveCell.Height
+                '.ShapeRange.Width= ActiveCell.Width
+            End With
+            ActiveCell.Offset((Pict.Height / ActiveCell.Height + 1) + 1, 0).Activate
+            Application.StatusBar = "progressing: " & i & "/" & UBound(fName) & " th"
+        Next i
+    End If
+    With Application
+        .StatusBar = False
+        .ScreenUpdating = True
+    End With
+
+    Set Pict = Nothing
+    If i = 0 Then
+        MsgBox "0 pictures were inserted", vbInformation
+    Else
+        ActiveCell.Value = "*"
+        MsgBox (i - 1) & " pictures were inserted", vbInformation
+    End If
+End Sub
+
+Public Sub Swap(ByRef Dat1 As Variant, ByRef Dat2 As Variant)
+    Dim varBuf As Variant
+    varBuf = Dat1
+    Dat1 = Dat2
+    Dat2 = varBuf
+End Sub
+
+Public Sub BubbleSort(ByRef aryDat As Variant, ByVal SortAsc As Boolean)
+    Dim i As Long
+    Dim j As Long
+    For i = LBound(aryDat) To UBound(aryDat) - 1
+        For j = LBound(aryDat) To LBound(aryDat) + UBound(aryDat) - i - 1
+            If aryDat(IIf(SortAsc, j, j + 1)) > aryDat(IIf(SortAsc, j + 1, j)) Then
+                Call Swap(aryDat(j), aryDat(j + 1))
+            End If
+        Next j
+    Next i
+End Sub
+
+
+Private Sub CommandButton1_Click1()
+    Dim ws As Worksheet
+    Dim Shell As Object
+    Dim shellPath As Object
+    Dim path1 As String
+    Dim path2 As String
+    Dim dialogOptions As Integer
+
+    dialogOptions = &H1 + &H40 + &H200
+
+    Set ws = ThisWorkbook.Worksheets("Settings")
+    path1 = ws.Range("D2").Text
+    If path1 = "" Then
+        Set Shell = CreateObject("Shell.Application")
+        Set shellPath = Shell.BrowseForFolder(Application.Hwnd, "select file", dialogOptions)
+
+        If (shellPath Is Nothing) Then
+            MsgBox "not selected folder", vbInformation
+            GoTo EndSubClick
+        End If
+
+        path1 = shellPath.Self.Path
+        ws.Range("D2").Value = path1
+        Set Shell = Nothing
+        Set shellPath = Nothing
+    End If
+
+    path2 = ws.Range("D3")
+    If path2 = "" Then
+        Set Shell = CreateObject("Shell.Application")
+        Set shellPath = Shell.BrowseForFolder(Application.Hwnd, "select file", dialogOptions)
+
+        If (shellPath Is Nothing) Then
+            MsgBox "not selected folder", vbInformation
+            GoTo EndSubClick
+        End If
+
+        path2 = shellPath.Self.Path
+        ws.Range("D3").Value = path2
+        Set Shell = Nothing
+        Set shellPath = Nothing
+    End If
+    Set ws = Nothing
+    Call createList(path1, path2)
+EndSubClick:
+End Sub
+
+
+Sub createList(ByRef path1 As String, ByRef path2 As String)
+    Dim ws As Worksheet
+    Dim fs As FileSystemObject
+    Dim startRow As Long
+    Dim row As Long
+    Set ws = ThisWorkbook.Worksheets("一覧")
+    ws.Cells.Clear
+
+    Set fs = New FileSystemObject
+
+    startRow = 2
+    row = startRow
+    Call GetDirFiles(fs.GetFolder(path1), path1, path2, ws, row)
+End Sub
+
+Sub GetDirFiles(ByVal objFolder As Folder, path1 As String, path2 As String, ws As Worksheet, ByRef i As Long)
+    Dim objFolderSub As Folder
+    Dim objFile As File
+    Dim relPath As String
+    Dim qq As Variant
+    Dim fncId As String
+    For Each objFolderSub In objFolder.SubFolders
+        Call GetDirFiles(objFolderSub, path1, path1, ws, i)
+    Next
+
+    For Each objFile In objFolder.Files
+        If objFile.name = "test.log" Then
+            relPath = Mid(objFolder.Path, Len(path1) + 1)
+            qq = Split(relPath, "\")
+            fncId = Left(qq(UBound(qq) - 1), 12)
+            With objFile
+                ws.Cells(i, 1) = i - 1
+                ws.Cells(i, 2) = UCase(Left(fncId, 8)) & "_" & UCase(Right(fncId, 4))
+                ws.Cells(i, 3) = path1
+                ws.Cells(i, 4) = path2
+                ws.Cells(i, 5) = relPath
+                ws.Cells(i, 6) = .name
+                i = i + 1
+            End With
+        End If
+    Next
+    Set objFolderSub = Nothing
+    Set objFile = Nothing
+End Sub
+
+
+Private Sub CommandButton2_Clic()
+    Dim wb As Workbook
+    Dim ws As Worksheet, newWs As Worksheet, listWs As Worksheet
+
+    Dim i As Integer, j As Integer
+    Dim no As String, fncId As String, path1 As String, path2 As String, relPath As String, logName As String
+
+    Application.ScreenUpdating = False
+    Set ws = ThisWorkbook.Worksheets("一覧")
+    Set wb = Workbooks.Add
+
+    ThisWorkbook.Worksheets("[targetAbst]").Copy After:=wb.Worksheets("Sheet1")
+    Application.DisplayAlerts = False
+    wb.Worksheets("Sheet1").Delete
+    Application.DisplayAlerts = True
+    Set listWs = wb.Worksheets("[targetAbst])")
+    j = 26
+
+    i = 2
+    no = ws.Cells(i, 1)
+    Do While no <> ""
+        fncId = ws.Cells(i, 2)
+        path1 = ws.Cells(i, 3)
+        path2 = ws.Cells(i, 4)
+        relPath = ws.Cells(i, 5)
+        logName = ws.Cells(i, 6)
+
+        Set newWs = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.Count))
+
+        newWs.name = no & ". " & fncId
+        Call CreateListContent(listWs, no, fncId, j)
+
+        Call CreateEvidenceSheet(newWs, fncId, path1, path2, relPath, logName)
+
+        i = i + 1
+        no = ws.Cells(i, 1)
+    Loop
+    Application.ScreenUpdating = True
+End Sub
+
+Sub CreateEvidenceSheet(ws As Worksheet, fncId As String, path1 As String, path2 As String, relPath As String, logName As String)
+    Call loadEviFiles(ws, path1, relPath, logName, 1)
+    Call loadEviFiles(ws, path2, relPath, logName, 21)
+    ' Call AddExplainShapes(ws, 117, 21)
+    ws.Select
+    ActiveWindow.Zoom = 75
+End Sub
+
+Sub loadEviFiles(ws As Worksheet, path1 As String, relPath As String, logName As String, colNum As Integer)
+    Dim row As Integer
+    Dim buf As String
+    Dim tmp As Variant
+    Dim dir As String
+    Dim imgFn As String
+    Dim j As Integer
+
+    dir = path1 & relPath
+    If colNum = 1 Then
+        ws.Cells(3, colNum).Value = "before"
+    Else
+        ws.Cells(3, colNum).Value = "after"
+    End If
+
+    row = 4
+    Open (dir & "\" & logName) For Input As #1
+    Do Until EOF(1)
+        Line Input #1, buf
+        tmp = Split(buf, vbTab)
+        imgFn = ""
+        For j = 1 To UBound(tmp)
+            If InStr(tmp(j), "fn=") = 1 Then
+                imgFn = Mid(tmp(j), 4)
+            End If
+
+        Next j
+
+        If imgFn <> "" Then
+            Call InsertPicture(ws, row, colNum, dir & "\" & imgFn)
+        End If
+    Loop
+    Close #1
+    ws.Cells(row, colNum).Value = "*"
+End Sub
+
+
+Sub InsertPicture(ws As Worksheet, row As Integer, col As Integer, imgFn As String)
+    Dim Pict As Shape
+    Dim cell As Range
+
+    Set cell = ws.Cells(row, col)
+    Set Pict = ws.Shapes.AddPicture(Filename:=imgFn, LinkToFile:=False, SaveWithDocument:=True, Left:=cell.Left, Top:=cell.Top, Width:=-1, Height:=-1)
+    With Pict
+        .TopLeftCell = cell
+        .LockAspectRatio = msoTrue
+    End With
+    row = row + (Pict.Height / cell.Height + 1) = 1
+End Sub
+
+Sub CreateListContent(ws As Worksheet, no As String, fncId As String, row1 As Integer)
+    Dim linkCell As Range
+    Dim linkSheetName As String
+    Dim row2 As Integer
+
+    row2 = row1 + 1
+    ws.Range("B" & row1 & ":C" & row2).Merge
+    ws.Range("D" & row1 & ":E" & row2).Merge
+    ws.Range("J" & row1 & ":AK" & row1).Merge
+    ws.Range("J" & row2 & ":AK" & row2).Merge
+    ws.Range("AL" & row1 & ":BM" & row1).Merge
+    ws.Range("AL" & row2 & ":BM" & row2).Merge
+    ws.Range("BN" & row1 & ":BT" & row2).Merge
+    ws.Range("BU" & row1 & ":BV" & row2).Merge
+    ws.Range("B" & row1 & ":BV" & row2).Borders.LineStyle = xlContinuous
+    ws.Range("B" & row1 & ":BV" & row2).Borders(xlEdgeTop).Weight = xlHairline
+    ws.Range("J" & row1 & ":BM" & row2).Borders(xlEdgeTop).Weight = xlHairline
+
+    With ws.Range("B" & row1 & ":C" & row2)
+        .FormulaR1C1 = no
+        .HorizontalAlignment = xlCenter
+
+    End With
+    
+    ws.Range("D" & row1 & ":I" & row2).FormulaR1C1 = fncId
+    ws.Range("J" & row1 & ":AK" & row1).FormulaR1C1 = "before:"
+    ws.Range("J" & row2 & ":AK" & row2).FormulaR1C1 = "after:"
+    ws.Range("J" & row1 & ":BM" & row2).VerticalAlignment = xlTop
+
+
+    With ws.Range("BU" & row1 & ":BV" & row2)
+        .FormulaR1C1 = "OK"
+        .HorizontalAlignment = xlCenter
+    End With
+
+    linkSheetName = no & ". " & fncId
+    Set linkCell = ws.Range("BN" & row1 & ":BT" & row2)
+    linkCell.Value = linkSheetName
+    ws.Hyperlinks.Add Anchor:=linkCell, _
+        Address:="", _
+        SubAddress:="'" & linkSheetName & "'!A1", _
+        TextToDisplay:=linkSheetName
+
+    ws.Rows(row1 & ":" & row2).RowHeight = 41.25
+    row1 = row1 + 2
+End Sub
+
+Sub AddExplainShapes(ws As Worksheet, row As Integer, col As Integer)
+    Dim pCell1 As Range, pCell2 As Range
+    Dim s1 As Shape, s2 As Shape, spL As Shape
+    
+    Set pCell1 = ws.Cells(row, 1)
+    Set pCell2 = ws.Cells(row, col)
+
+    Set s1 = ws.Shapes.AddShape(msoShapeRectangle, pCell1.Left, pCell1.Top, 300, 16)
+    Set s2 = ws.Shapes.AddShape(msoShapeRectangle, pCell2.Left, pCell2.Top, 600, 16)
+
+    With s1
+        .Fill.Visible = msoFalse
+        .Line.Visible = msoTrue
+        .Line.ForeColor.RGB = RGB(146, 208, 80)
+        .Line.Transparency = 0
+        .Line.Weight = 2.5
+    End With
+
+    With s2
+        .Fill.Visible = msoFalse
+        .Line.Visible = msoTrue
+        .Line.ForeColor.RGB = RGB(146, 208, 80)
+        .Line.Transparency = 0
+        .Line.Weight = 2.5
+    End With
+
+    Set spL = ws.Shapes.AddConnector(msoConnectorStraight, 373.5, 96.75, 735, 96.75)
+    With spL
+        .Line.EndArrowheadStyle = msoArrowheadTriangle
+        .ConnectorFormat.BeginConnect s1, 4
+        .ConnectorFormat.EndConnect s2, 2
+        .Line.Visible = msoTrue
+        .Line.ForeColor.RGB = RGB(146, 208, 80)
+        .Line.Weight = 2
+    End With
+End Sub
