@@ -1,0 +1,12 @@
+[package]
+name = "durs"
+version = "0.1.0"
+authors = ["tfviv79 <tfviv79@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+getopts = "0.2"
+regex = "1"
+signal-hook = "0.1"
+anyhow = "1.0"
+thiserror = "1.0"
