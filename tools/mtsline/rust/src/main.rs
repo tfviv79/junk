@@ -39,45 +39,75 @@ mod cli {
 struct Stat {
     date: String,
     category: String,
-    kind: String,
+    kind: Vec<String>,
     time: f32,
+    note: String,
 }
 
 impl Stat {
-    fn key(&self, lvl: i32) -> String {
-        let key = format!("{}", self.date);
-        let sep = "-";
-
-        if lvl == 1 || (self.category == "" && self.kind == "") {
-            return key;
+    fn keys(&self) -> Vec<String> {
+        let mut ret = Vec::new();
+        ret.push(self.date[..7].to_string());
+        ret.push(self.date[8..10].to_string());
+        if self.category != "" {
+            ret.push(self.category.to_string());
+            if self.kind.len() != 0 {
+                ret.append(&mut self.kind.clone());
+            }
         }
-
-        let key = format!("{}{}{}", key, sep, self.category);
-        if lvl == 2 || self.kind == "" {
-            return key;
-        }
-        format!("{}{}{}", key, sep, self.kind)
-    }
-
-    fn update(&mut self, time: f32) {
-        self.time += time
+        ret
     }
 }
 
 struct StatMap {
-    map: BTreeMap<String, Stat>,
+    map: BTreeMap<String, StatMap>,
+    stats: Vec<Stat>,
+    sum: Option<f32>,
 }
 impl StatMap {
     fn new() -> StatMap {
         StatMap {
             map: BTreeMap::new(),
+            stats: Vec::new(),
+            sum: None,
         }
     }
 
+    fn sum(&self) -> f32 {
+        if self.sum.is_some() {
+            return self.sum.unwrap();
+        }
+        0.0f32
+    }
+
+    fn calc_sums(&mut self) -> f32 {
+        if self.sum.is_some() {
+            return self.sum.unwrap();
+        }
+
+        let mut sum = 0.0f32;
+        sum += self.map.values_mut().map(|x| x.calc_sums()).sum::<f32>();
+        sum += self.stats.iter().map(|x| x.time).sum::<f32>();
+        self.sum = Some(sum);
+        sum
+    }
+
     fn update(&mut self, stat: Stat) {
-        let key = stat.key(0);
-        let entry = self.map.entry(key);
-        entry.and_modify(|e| e.update(stat.time)).or_insert(stat);
+        let keys = stat.keys();
+        self.update_keys(stat, keys.iter());
+    }
+
+    fn update_keys<'a>(&mut self, stat: Stat, mut keys: impl Iterator<Item = &'a String>) {
+        let key = keys.next();
+        if key.is_none() {
+            self.stats.push(stat);
+            return;
+        }
+        let key = key.unwrap();
+        let entry = self.map.entry(key.to_string());
+        entry
+            .or_insert_with(|| StatMap::new())
+            .update_keys(stat, keys);
     }
 }
 
@@ -101,14 +131,16 @@ fn parse_line(line: &str) -> Option<Stat> {
         return None;
     }
     let category = cate_kind[0].to_string();
-    let kind = cate_kind[1].to_string();
+    let kind = cate_kind[1..].iter().map(|x| x.to_string()).collect();
     let time: f32 = (&m[1]).parse().unwrap();
+    let note = m[3].to_string();
 
     Some(Stat {
         date: yymmdd.to_string(),
         category,
         kind,
         time,
+        note,
     })
 }
 
@@ -122,23 +154,20 @@ fn parse_file(filename: String, map: &mut StatMap) -> anyhow::Result<()> {
 }
 
 fn print_out(map: &StatMap) {
-    for (key, value) in &map.map {
-        println!("{:25} {:6.2}", key, value.time);
-    }
+    print_out_key("", 1, map);
 }
 
-fn calc_stat(map: &StatMap) -> StatMap {
-    let mut out_data = StatMap::new();
+fn print_out_key<'a>(prefix: &'a str, level: i32, map: &StatMap) {
     for (key, value) in &map.map {
-        let new_key = &key[0..7];
-        out_data.update(Stat {
-            date: new_key.to_string(),
-            category: value.category.clone(),
-            kind: "".to_string(),
-            time: value.time,
-        });
+        let separator = match level {
+            1 => "",
+            2 => "-",
+            _ => "_",
+        };
+        let title = format!("{}{}{}", prefix, separator, key);
+        println!("{} {:6.2}", title, value.sum());
+        print_out_key(&title, level + 1, value);
     }
-    out_data
 }
 
 fn main() -> anyhow::Result<()> {
@@ -148,9 +177,9 @@ fn main() -> anyhow::Result<()> {
     for filename in opts.filenames {
         parse_file(filename, &mut map)?;
     }
-    let out_data = calc_stat(&map);
+    map.calc_sums();
 
-    print_out(&out_data);
+    print_out(&map);
 
     Ok(())
 }
