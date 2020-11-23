@@ -44,8 +44,16 @@ struct Stat {
     note: String,
 }
 
+const INDENT_UNIT: &str = "    ";
+
 impl Stat {
     fn keys(&self) -> Vec<String> {
+        // maximum keys level => 5.
+        // 1: year-month
+        // 2: day
+        // 3: @category
+        // 4: kind 1
+        // 5: kind 2
         let mut ret = Vec::new();
         ret.push(self.date[..7].to_string());
         ret.push(self.date[8..10].to_string());
@@ -71,6 +79,17 @@ impl StatMap {
             stats: Vec::new(),
             sum: None,
         }
+    }
+
+    fn notes(&self) -> String {
+        let mut notes = self
+            .stats
+            .iter()
+            .map(|x| x.note.clone())
+            .collect::<Vec<String>>();
+        notes.sort();
+        notes.dedup();
+        notes.join(",")
     }
 
     fn sum(&self) -> f32 {
@@ -126,7 +145,8 @@ fn parse_line(line: &str) -> Option<Stat> {
     let m: Vec<String> = s.split("\t").map(|x| x.to_string()).collect();
     let mdate = PTNV.captures(&m[0])?;
     let yymmdd = &mdate[1];
-    let cate_kind: Vec<&str> = m[2].split(":").collect();
+    // key level maximum is 5 (because kind's max is 2)
+    let cate_kind: Vec<&str> = m[2].splitn(3, ":").collect();
     if cate_kind.len() < 2 {
         return None;
     }
@@ -152,21 +172,83 @@ fn parse_file(filename: String, map: &mut StatMap) -> anyhow::Result<()> {
 
     Ok(())
 }
-
-fn print_out(map: &StatMap) {
-    print_out_key("", 1, map);
+fn print_out_detail(map: &StatMap) {
+    let max_date: &str = "2020-11-13";
+    print_out_detail_key("", 1, map, max_date);
+}
+fn print_out_detail_key<'a>(prefix: &'a str, level: i32, map: &StatMap, max_date: &'a str) {
+    if level < 3 {
+        for (key, value) in &map.map {
+            let title = format!("{}{}{}", prefix, if level == 2 { "-" } else { "" }, key);
+            print_out_detail_key(&title, level + 1, value, max_date);
+        }
+        return;
+    }
+    if prefix < max_date {
+        return;
+    }
+    print!("{} {:6.2}(", prefix, map.sum());
+    for (index, (key, value)) in map.map.iter().enumerate() {
+        let sep = if index == 0 { "" } else { ", " };
+        print!("{}{}[{:6.2}]", sep, key, value.sum());
+    }
+    println!(")");
+    for (key, value) in &map.map {
+        print_out_detail_data(INDENT_UNIT, &key, value);
+    }
 }
 
-fn print_out_key<'a>(prefix: &'a str, level: i32, map: &StatMap) {
+fn print_out_detail_data<'a>(indent: &'a str, prefix: &'a str, map: &StatMap) {
     for (key, value) in &map.map {
-        let separator = match level {
-            1 => "",
-            2 => "-",
-            _ => "_",
-        };
-        let title = format!("{}{}{}", prefix, separator, key);
-        println!("{} {:6.2}", title, value.sum());
-        print_out_key(&title, level + 1, value);
+        if value.map.is_empty() {
+            println!(
+                "{}{} {}[{:6.2}]: {}",
+                indent,
+                prefix,
+                key,
+                value.sum(),
+                value.notes()
+            );
+        } else {
+            println!("{}{}[{:6.2}]", indent, prefix, value.sum());
+            let new_indent = format!("{}{}", indent, INDENT_UNIT);
+            let new_prefix = format!("{}", key);
+            print_out_detail_data(&new_indent, &new_prefix, value);
+        }
+    }
+}
+
+fn print_out_summary(map: &StatMap) {
+    print_out_summary_key(1, map);
+}
+
+fn print_out_summary_key<'a>(level: i32, map: &StatMap) {
+    if level > 2 {
+        return;
+    }
+
+    const INDENT_BY: usize = 10;
+
+    for (idx, (key, value)) in map.map.iter().enumerate() {
+        if level == 1 {
+            let title = key;
+            print!("{} {:6.2}", title, value.sum());
+            print_out_summary_key(level + 1, value);
+        } else if level == 2 {
+            let title = key;
+            if idx % INDENT_BY == 0 {
+                println!("")
+            }
+            let indent = if idx % INDENT_BY == 0 {
+                INDENT_UNIT
+            } else {
+                ""
+            };
+            print!("{}{}[{:5.2}]  ", indent, title, value.sum());
+        }
+    }
+    if level == 2 {
+        println!("");
     }
 }
 
@@ -179,7 +261,8 @@ fn main() -> anyhow::Result<()> {
     }
     map.calc_sums();
 
-    print_out(&map);
+    print_out_summary(&map);
+    print_out_detail(&map);
 
     Ok(())
 }
