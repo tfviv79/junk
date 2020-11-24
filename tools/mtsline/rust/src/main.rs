@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use anyhow;
+use chrono::{Duration, Local};
 use lazy_static::lazy_static;
 use regex;
 
@@ -10,6 +11,7 @@ mod cli {
     #[derive(Debug)]
     pub struct Opts {
         pub filenames: Vec<String>,
+        pub ago_days: i64,
     }
 
     pub fn parse_cli_opt() -> Opts {
@@ -17,6 +19,14 @@ mod cli {
             .version("0.1.0")
             .author("tfviv79")
             .about("time line counter")
+            .arg(
+                Arg::with_name("ago_days")
+                    .short("n")
+                    .long("ago_days")
+                    .help("days ago")
+                    .takes_value(true)
+                    .default_value("5"),
+            )
             .arg(
                 Arg::with_name("filenames")
                     .help("target filenames")
@@ -31,8 +41,17 @@ mod cli {
                 .unwrap()
                 .map(|x| x.to_string())
                 .collect(),
+            ago_days: matches
+                .value_of("ago_days")
+                .map(|x| x.to_string().parse::<i64>().unwrap())
+                .unwrap(),
         }
     }
+}
+
+#[derive(Debug)]
+struct Ctx {
+    ago_days: i64,
 }
 
 #[derive(Debug)]
@@ -164,7 +183,7 @@ fn parse_line(line: &str) -> Option<Stat> {
     })
 }
 
-fn parse_file(filename: String, map: &mut StatMap) -> anyhow::Result<()> {
+fn parse_file(_ctx: &Ctx, filename: String, map: &mut StatMap) -> anyhow::Result<()> {
     for line in std::fs::read_to_string(&filename)?.split("\n") {
         let stat = parse_line(line);
         stat.map(|x| map.update(x));
@@ -172,15 +191,23 @@ fn parse_file(filename: String, map: &mut StatMap) -> anyhow::Result<()> {
 
     Ok(())
 }
-fn print_out_detail(map: &StatMap) {
-    let max_date: &str = "2020-11-13";
-    print_out_detail_key("", 1, map, max_date);
+fn print_out_detail(ctx: &Ctx, map: &StatMap) {
+    let today = Local::today();
+    let ago_days = today - Duration::days(ctx.ago_days);
+    let max_date: &str = &ago_days.format("%Y-%m-%d").to_string();
+    print_out_detail_key(ctx, "", 1, map, max_date);
 }
-fn print_out_detail_key<'a>(prefix: &'a str, level: i32, map: &StatMap, max_date: &'a str) {
+fn print_out_detail_key<'a>(
+    ctx: &Ctx,
+    prefix: &'a str,
+    level: i32,
+    map: &StatMap,
+    max_date: &'a str,
+) {
     if level < 3 {
         for (key, value) in &map.map {
             let title = format!("{}{}{}", prefix, if level == 2 { "-" } else { "" }, key);
-            print_out_detail_key(&title, level + 1, value, max_date);
+            print_out_detail_key(ctx, &title, level + 1, value, max_date);
         }
         return;
     }
@@ -194,35 +221,35 @@ fn print_out_detail_key<'a>(prefix: &'a str, level: i32, map: &StatMap, max_date
     }
     println!(")");
     for (key, value) in &map.map {
-        print_out_detail_data(INDENT_UNIT, &key, value);
+        print_out_detail_data(ctx, INDENT_UNIT, &key, value);
     }
 }
 
-fn print_out_detail_data<'a>(indent: &'a str, prefix: &'a str, map: &StatMap) {
+fn print_out_detail_data<'a>(ctx: &Ctx, indent: &'a str, prefix: &'a str, map: &StatMap) {
+    println!("{}[{:6.2}] {}", indent, map.sum(), prefix);
     for (key, value) in &map.map {
         if value.map.is_empty() {
             println!(
-                "{}{} {}[{:6.2}]: {}",
+                "{}{}[{:6.2}] {}: {}",
                 indent,
-                prefix,
-                key,
+                INDENT_UNIT,
                 value.sum(),
+                key,
                 value.notes()
             );
         } else {
-            println!("{}{}[{:6.2}]", indent, prefix, value.sum());
             let new_indent = format!("{}{}", indent, INDENT_UNIT);
             let new_prefix = format!("{}", key);
-            print_out_detail_data(&new_indent, &new_prefix, value);
+            print_out_detail_data(ctx, &new_indent, &new_prefix, value);
         }
     }
 }
 
-fn print_out_summary(map: &StatMap) {
-    print_out_summary_key(1, map);
+fn print_out_summary(ctx: &Ctx, map: &StatMap) {
+    print_out_summary_key(ctx, 1, map);
 }
 
-fn print_out_summary_key<'a>(level: i32, map: &StatMap) {
+fn print_out_summary_key<'a>(ctx: &Ctx, level: i32, map: &StatMap) {
     if level > 2 {
         return;
     }
@@ -233,7 +260,7 @@ fn print_out_summary_key<'a>(level: i32, map: &StatMap) {
         if level == 1 {
             let title = key;
             print!("{} {:6.2}", title, value.sum());
-            print_out_summary_key(level + 1, value);
+            print_out_summary_key(ctx, level + 1, value);
         } else if level == 2 {
             let title = key;
             if idx % INDENT_BY == 0 {
@@ -255,14 +282,17 @@ fn print_out_summary_key<'a>(level: i32, map: &StatMap) {
 fn main() -> anyhow::Result<()> {
     let opts: cli::Opts = cli::parse_cli_opt();
     let mut map = StatMap::new();
+    let ctx = Ctx {
+        ago_days: opts.ago_days,
+    };
 
     for filename in opts.filenames {
-        parse_file(filename, &mut map)?;
+        parse_file(&ctx, filename, &mut map)?;
     }
     map.calc_sums();
 
-    print_out_summary(&map);
-    print_out_detail(&map);
+    print_out_detail(&ctx, &map);
+    print_out_summary(&ctx, &map);
 
     Ok(())
 }
