@@ -43,7 +43,7 @@ mod cli {
                 .collect(),
             ago_days: matches
                 .value_of("ago_days")
-                .map(|x| x.to_string().parse::<i64>().unwrap())
+                .map(|x| x.parse::<i64>().unwrap())
                 .unwrap(),
         }
     }
@@ -172,7 +172,7 @@ fn parse_line(line: &str) -> Option<Stat> {
     let category = cate_kind[0].to_string();
     let kind = cate_kind[1..].iter().map(|x| x.to_string()).collect();
     let time: f32 = (&m[1]).parse().unwrap();
-    let note = m[3].to_string();
+    let note = m[3].trim().to_string();
 
     Some(Stat {
         date: yymmdd.to_string(),
