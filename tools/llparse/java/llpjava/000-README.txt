@@ -1,4 +1,4 @@
-* DESC: base line for base cui application with java.
+* DESC: parser combinator
 
 * construct modules.
   - lombok
@@ -11,3 +11,9 @@
 	- mockit
 
 * and thier samples.
+
+
+refs:
+https://qiita.com/niwasawa/items/cfcd37a3c2a795c336ba
+https://junit.org/junit5/docs/current/user-guide/#writing-tests-assertions
+
