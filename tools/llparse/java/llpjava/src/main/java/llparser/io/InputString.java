@@ -11,7 +11,7 @@ public class InputString implements Input {
 
     @Override
     public Pos pos() {
-        return pos;
+        return pos.clone();
     }
 
     @Override
@@ -19,4 +19,8 @@ public class InputString implements Input {
         return pos.peek(v.charAt((int)pos.seek()));
     }
 
+    @Override
+    public void back(Pos p) {
+        this.pos = p;
+    }
 }

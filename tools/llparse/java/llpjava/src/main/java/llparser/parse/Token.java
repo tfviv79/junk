@@ -11,6 +11,9 @@ public class Token {
     public static TString of(char c) {
         return new TString("" + c);
     }
+    public static TString of(String s) {
+        return new TString(s);
+    }
 
     public static class TString extends Token {
         public TString(String v) {

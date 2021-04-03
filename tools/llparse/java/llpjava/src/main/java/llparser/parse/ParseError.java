@@ -15,5 +15,9 @@ public class ParseError {
     public static enum Error {
         Syntax
     }
+
+    public static ParseError syntax(Pos pos, String msg) {
+        return new ParseError(Error.Syntax, pos, msg);
+    }
 }
 

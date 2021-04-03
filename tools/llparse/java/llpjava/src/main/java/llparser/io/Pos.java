@@ -22,12 +22,15 @@ public class Pos {
         return row;
     }
 
-    public long seekInc() {
-        row++;
-        return seek++;
+    public Pos clone() {
+        Pos p = new Pos();
+        p.line = this.line;
+        p.row = this.row;
+        p.seek = this.seek;
+        return p;
     }
 
-    public char peek(final char ch) {
+    char peek(final char ch) {
         if (hasLf) {
             line++;
             row = 0;
@@ -39,4 +42,10 @@ public class Pos {
         }
         return ch;
     }
+
+    private long seekInc() {
+        row++;
+        return seek++;
+    }
+
 }
