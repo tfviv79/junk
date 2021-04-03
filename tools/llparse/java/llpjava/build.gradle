@@ -1,0 +1,53 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        // task junitPlatform
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.3'
+    }
+    //plugins {
+    //    id 'junit-plat-form-gradel-plugin'
+    //}
+}
+
+
+plugins {
+    id 'java'
+    id 'application'
+}
+
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+	jcenter()
+}
+
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+
+    compileOnly("org.projectlombok:lombok:1.18.20")
+    testCompileOnly("org.projectlombok:lombok:1.18.20")
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
+
+mainClassName = 'Main'
+ // gradle run -Pargs="a b c"
+run {
+	if (project.hasProperty("args")) {
+		args(project.args.split('\\s+'))
+	}
+}
+
+
+
