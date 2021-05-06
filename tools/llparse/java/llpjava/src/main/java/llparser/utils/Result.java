@@ -13,6 +13,14 @@ public class Result<Ok, Ng> {
         this.ng = ng;
     }
 
+    public Ok ok() {
+        return ok;
+    }
+
+    public Ng ng() {
+        return ng;
+    }
+
     public <Ok2> Result<Ok2, Ng> map(Function<Ok, Ok2> apply) {
         if (isOk) {
             return ok(apply.apply(ok));
@@ -34,6 +42,14 @@ public class Result<Ok, Ng> {
             return ok(ok);
         } else {
             return ng(apply.apply(ng));
+        }
+    }
+
+    public <Ng2> Result<Ok, Ng2> err(Function<Ng, Result<Ok, Ng2>> apply) {
+        if (isOk) {
+            return ok(ok);
+        } else {
+            return apply.apply(ng);
         }
     }
 

@@ -11,13 +11,19 @@ public class ParseError {
     public final Error err;
     public final Pos pos;
     public final String msg;
+    public final ParseError other;
 
     public static enum Error {
         Syntax
     }
 
-    public static ParseError syntax(Pos pos, String msg) {
-        return new ParseError(Error.Syntax, pos, msg);
+    public ParseError chain(ParseError other) {
+        return new ParseError(err, pos, msg, other);
     }
+
+    public static ParseError syntax(Pos pos, String msg) {
+        return new ParseError(Error.Syntax, pos, msg, null);
+    }
+
 }
 
