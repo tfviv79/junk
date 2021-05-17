@@ -1,9 +1,19 @@
+/**
+ *
+ *
+ *
+ *
+ */
 use std::collections::BTreeMap;
 
 use anyhow;
-use chrono::{Duration, Local};
+use chrono::{Datelike, Duration, Local, NaiveDate, ParseResult};
 use lazy_static::lazy_static;
 use regex;
+
+fn parse_date(s: &str) -> ParseResult<NaiveDate> {
+    NaiveDate::parse_from_str(s, "%Y-%m-%d")
+}
 
 mod cli {
     use clap::{App, Arg};
@@ -12,6 +22,7 @@ mod cli {
     pub struct Opts {
         pub filenames: Vec<String>,
         pub ago_days: i64,
+        pub detail_level: i32,
     }
 
     pub fn parse_cli_opt() -> Opts {
@@ -24,6 +35,14 @@ mod cli {
                     .short("n")
                     .long("ago_days")
                     .help("days ago")
+                    .takes_value(true)
+                    .default_value("5"),
+            )
+            .arg(
+                Arg::with_name("detail_level")
+                    .short("l")
+                    .long("level")
+                    .help("detail output level")
                     .takes_value(true)
                     .default_value("5"),
             )
@@ -45,6 +64,10 @@ mod cli {
                 .value_of("ago_days")
                 .map(|x| x.parse::<i64>().unwrap())
                 .unwrap(),
+            detail_level: matches
+                .value_of("detail_level")
+                .map(|x| x.parse::<i32>().unwrap())
+                .unwrap(),
         }
     }
 }
@@ -52,6 +75,7 @@ mod cli {
 #[derive(Debug)]
 struct Ctx {
     ago_days: i64,
+    detail_level: i32,
 }
 
 #[derive(Debug)]
@@ -67,12 +91,14 @@ const INDENT_UNIT: &str = "    ";
 
 impl Stat {
     fn keys(&self) -> Vec<String> {
-        // maximum keys level => 5.
+        // maximum keys level => n.
         // 1: year-month
         // 2: day
         // 3: @category
         // 4: kind 1
         // 5: kind 2
+        // ...
+        // n: kind n-3
         let mut ret = Vec::new();
         ret.push(self.date[..7].to_string());
         ret.push(self.date[8..10].to_string());
@@ -87,25 +113,36 @@ impl Stat {
 }
 
 struct StatMap {
+    key: String,
     map: BTreeMap<String, StatMap>,
     stats: Vec<Stat>,
     sum: Option<f32>,
 }
 impl StatMap {
-    fn new() -> StatMap {
+    fn new(key: String) -> StatMap {
         StatMap {
+            key,
             map: BTreeMap::new(),
             stats: Vec::new(),
             sum: None,
         }
     }
 
-    fn notes(&self) -> String {
-        let mut notes = self
+    fn notes_vec(&self) -> Vec<String> {
+        let notes = self
             .stats
             .iter()
             .map(|x| x.note.clone())
             .collect::<Vec<String>>();
+        notes
+    }
+
+    fn notes(&self) -> String {
+        let mut notes = self.notes_vec();
+        for value in self.map.values() {
+            notes.append(&mut value.notes_vec());
+        }
+
         notes.sort();
         notes.dedup();
         notes.join(",")
@@ -142,9 +179,10 @@ impl StatMap {
             return;
         }
         let key = key.unwrap();
+        let full_key = format!("{}-{}", self.key, key);
         let entry = self.map.entry(key.to_string());
         entry
-            .or_insert_with(|| StatMap::new())
+            .or_insert_with(|| StatMap::new(full_key))
             .update_keys(stat, keys);
     }
 }
@@ -164,14 +202,14 @@ fn parse_line(line: &str) -> Option<Stat> {
     let m: Vec<String> = s.split("\t").map(|x| x.to_string()).collect();
     let mdate = PTNV.captures(&m[0])?;
     let yymmdd = &mdate[1];
-    // key level maximum is 5 (because kind's max is 2)
-    let cate_kind: Vec<&str> = m[2].splitn(3, ":").collect();
+    let time: f32 = (&m[1]).parse().unwrap();
+
+    let cate_kind: Vec<&str> = m[2].split(":").collect();
     if cate_kind.len() < 2 {
         return None;
     }
     let category = cate_kind[0].to_string();
     let kind = cate_kind[1..].iter().map(|x| x.to_string()).collect();
-    let time: f32 = (&m[1]).parse().unwrap();
     let note = m[3].trim().to_string();
 
     Some(Stat {
@@ -188,15 +226,16 @@ fn parse_file(_ctx: &Ctx, filename: String, map: &mut StatMap) -> anyhow::Result
         let stat = parse_line(line);
         stat.map(|x| map.update(x));
     }
-
     Ok(())
 }
+
 fn print_out_detail(ctx: &Ctx, map: &StatMap) {
     let today = Local::today();
     let ago_days = today - Duration::days(ctx.ago_days);
     let max_date: &str = &ago_days.format("%Y-%m-%d").to_string();
     print_out_detail_key(ctx, "", 1, map, max_date);
 }
+
 fn print_out_detail_key<'a>(
     ctx: &Ctx,
     prefix: &'a str,
@@ -214,21 +253,22 @@ fn print_out_detail_key<'a>(
     if prefix < max_date {
         return;
     }
-    print!("{} {:6.2}(", prefix, map.sum());
-    for (index, (key, value)) in map.map.iter().enumerate() {
-        let sep = if index == 0 { "" } else { ", " };
-        print!("{}{}[{:6.2}]", sep, key, value.sum());
-    }
-    println!(")");
+    println!("{} {:6.2}", prefix, map.sum());
     for (key, value) in &map.map {
-        print_out_detail_data(ctx, INDENT_UNIT, &key, value);
+        print_out_detail_data(ctx, level, INDENT_UNIT, &key, value);
     }
 }
 
-fn print_out_detail_data<'a>(ctx: &Ctx, indent: &'a str, prefix: &'a str, map: &StatMap) {
+fn print_out_detail_data<'a>(
+    ctx: &Ctx,
+    level: i32,
+    indent: &'a str,
+    prefix: &'a str,
+    map: &StatMap,
+) {
     println!("{}[{:6.2}] {}", indent, map.sum(), prefix);
     for (key, value) in &map.map {
-        if value.map.is_empty() {
+        if value.map.is_empty() || ctx.detail_level <= level {
             println!(
                 "{}{}[{:6.2}] {}: {}",
                 indent,
@@ -240,8 +280,21 @@ fn print_out_detail_data<'a>(ctx: &Ctx, indent: &'a str, prefix: &'a str, map: &
         } else {
             let new_indent = format!("{}{}", indent, INDENT_UNIT);
             let new_prefix = format!("{}", key);
-            print_out_detail_data(ctx, &new_indent, &new_prefix, value);
+            print_out_detail_data(ctx, level + 1, &new_indent, &new_prefix, value);
         }
+    }
+}
+
+fn print_out_summary_category(map: &StatMap) {
+    let mut m: BTreeMap<String, f32> = BTreeMap::new();
+    for (_key, value) in map.map.iter() {
+        for (key_cate, value_cate) in value.map.iter() {
+            *(m.entry(key_cate.to_string()).or_insert(0f32)) += value_cate.sum();
+        }
+    }
+    print!(" ");
+    for (key, value) in m.iter() {
+        print!("{}[{:6.2}] ", key, value);
     }
 }
 
@@ -254,23 +307,39 @@ fn print_out_summary_key<'a>(ctx: &Ctx, level: i32, map: &StatMap) {
         return;
     }
 
-    const INDENT_BY: usize = 10;
+    let mut has_indent;
+    let mut prev_week = None;
 
     for (idx, (key, value)) in map.map.iter().enumerate() {
         if level == 1 {
             let title = key;
             print!("{} {:6.2}", title, value.sum());
+            print_out_summary_category(value);
             print_out_summary_key(ctx, level + 1, value);
         } else if level == 2 {
             let title = key;
-            if idx % INDENT_BY == 0 {
-                println!("")
-            }
-            let indent = if idx % INDENT_BY == 0 {
-                INDENT_UNIT
+            let date = parse_date(&value.key[1..]);
+
+            has_indent = false;
+            if idx == 0 {
+                println!("");
+                has_indent = true;
             } else {
-                ""
-            };
+                if date.is_ok() {
+                    let d = date.unwrap();
+                    let w = d.iso_week();
+                    if prev_week.is_some() {
+                        let pw = prev_week.unwrap();
+                        if w > pw {
+                            println!("");
+                            has_indent = true;
+                        }
+                    };
+                    prev_week = Some(w);
+                }
+            }
+
+            let indent = if has_indent { INDENT_UNIT } else { "" };
             print!("{}{}[{:5.2}]  ", indent, title, value.sum());
         }
     }
@@ -281,9 +350,10 @@ fn print_out_summary_key<'a>(ctx: &Ctx, level: i32, map: &StatMap) {
 
 fn main() -> anyhow::Result<()> {
     let opts: cli::Opts = cli::parse_cli_opt();
-    let mut map = StatMap::new();
+    let mut map = StatMap::new("".to_string());
     let ctx = Ctx {
         ago_days: opts.ago_days,
+        detail_level: opts.detail_level,
     };
 
     for filename in opts.filenames {
