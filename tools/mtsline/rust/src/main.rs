@@ -285,7 +285,7 @@ fn print_out_detail_data<'a>(
     }
 }
 
-fn print_out_summary_category(map: &StatMap) {
+fn print_out_summary_category(map: &StatMap, total_sum: f32) {
     let mut m: BTreeMap<String, f32> = BTreeMap::new();
     for (_key, value) in map.map.iter() {
         for (key_cate, value_cate) in value.map.iter() {
@@ -294,7 +294,12 @@ fn print_out_summary_category(map: &StatMap) {
     }
     print!(" ");
     for (key, value) in m.iter() {
-        print!("{}[{:6.2}] ", key, value);
+        let percent = if total_sum == 0.0f32 {
+            0.0f32
+        } else {
+            value / total_sum * 100.0f32
+        };
+        print!("{}[{:6.2}({:2.0}%)] ", key, value, percent);
     }
 }
 
@@ -313,8 +318,9 @@ fn print_out_summary_key<'a>(ctx: &Ctx, level: i32, map: &StatMap) {
     for (idx, (key, value)) in map.map.iter().enumerate() {
         if level == 1 {
             let title = key;
-            print!("{} {:6.2}", title, value.sum());
-            print_out_summary_category(value);
+            let total_sum = value.sum();
+            print!("{} {:6.2}", title, total_sum);
+            print_out_summary_category(value, total_sum);
             print_out_summary_key(ctx, level + 1, value);
         } else if level == 2 {
             let title = key;
