@@ -4,9 +4,11 @@ package llparser.io;
 public class InputString implements Input {
     private String v;
     private Pos pos;
+    private int length;
     public InputString(String v) {
         this.pos = new Pos();
         this.v = v;
+        this.length = v.length();
     }
 
     @Override
@@ -16,7 +18,12 @@ public class InputString implements Input {
 
     @Override
     public char peek() {
-        return pos.peek(v.charAt((int)pos.seek()));
+        int nextPos = (int)pos.seek();
+        if (nextPos < length) {
+            return pos.peek(v.charAt(nextPos));
+        } else {
+            return (char)0;
+        }
     }
 
     @Override

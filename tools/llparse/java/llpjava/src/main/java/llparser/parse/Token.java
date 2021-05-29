@@ -12,29 +12,34 @@ public class Token {
         this.v = v;
     }
 
-
-    public static TString of(char c) {
-        return new TString("" + c);
-    }
-    public static TString of(String s) {
-        return new TString(s);
-    }
-    public static TSpace sp(String s) {
-        return new TSpace(s);
+    @Override
+    public String toString() {
+        return v;
     }
 
-    public static TContainer list(String s) {
-        return new TContainer(s);
+
+    public static Token of(char c) {
+        return new Token("" + c);
+    }
+    public static Token of(String s) {
+        return new Token(s);
+    }
+    public static NamedToken of(String name, Token token) {
+        return new NamedToken(name, token);
+    }
+
+    public static ListToken list() {
+        return new ListToken();
     }
 
     // 非末端トークン
-    public static class TContainer extends Token {
+    public static class ListToken extends Token {
         private List<Token> tokens = new ArrayList<>();
-        public TContainer(String v) {
-            super(v);
+        public ListToken() {
+            super("");
         }
 
-        public TContainer add(Token token) {
+        public ListToken add(Token token) {
             tokens.add(token);
             return this;
         }
@@ -51,23 +56,15 @@ public class Token {
         }
     }
 
-
-    // 末端トークン
-    public static abstract class TTerminal extends Token {
-        public TTerminal(String v) {
-            super(v);
+    public static class NamedToken extends Token {
+        public final Token token;
+        public NamedToken(String name, Token token) {
+            super(name);
+            this.token = token;
         }
-    }
 
-
-    public static class TString extends TTerminal {
-        public TString(String v) {
-            super(v);
-        }
-    }
-    public static class TSpace extends TTerminal {
-        public TSpace(String v) {
-            super(v);
+        public String name() {
+            return v;
         }
     }
 }

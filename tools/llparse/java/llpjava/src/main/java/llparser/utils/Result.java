@@ -57,6 +57,10 @@ public class Result<Ok, Ng> {
         return isOk;
     }
 
+    public boolean isErr() {
+        return !isOk();
+    }
+
     public static <Ok2, Ng2> Result<Ok2, Ng2> ok(Ok2 o) {
         return new Result<Ok2, Ng2>(true, o, null);
     }

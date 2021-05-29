@@ -14,7 +14,7 @@ public class ParseError {
     public final ParseError other;
 
     public static enum Error {
-        Syntax
+        Syntax, EndOfInput,
     }
 
     public ParseError chain(ParseError other) {
@@ -23,6 +23,10 @@ public class ParseError {
 
     public static ParseError syntax(Pos pos, String msg) {
         return new ParseError(Error.Syntax, pos, msg, null);
+    }
+
+    public static ParseError end(Pos pos) {
+        return new ParseError(Error.EndOfInput, pos, "", null);
     }
 
 }
