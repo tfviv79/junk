@@ -2,13 +2,6 @@ buildscript {
     repositories {
         jcenter()
     }
-    dependencies {
-        // task junitPlatform
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.3'
-    }
-    //plugins {
-    //    id 'junit-plat-form-gradel-plugin'
-    //}
 }
 
 
@@ -16,8 +9,6 @@ plugins {
     id 'java'
     id 'application'
 }
-
-apply plugin: 'org.junit.platform.gradle.plugin'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -44,10 +35,11 @@ compileJava {
 mainClassName = 'Main'
  // gradle run -Pargs="a b c"
 run {
-	if (project.hasProperty("args")) {
-		args(project.args.split('\\s+'))
-	}
+    if (project.hasProperty("args")) {
+        args(project.args.split('\\s+'))
+    }
 }
 
-
-
+test {
+    useJUnitPlatform()
+}
