@@ -1,70 +1,98 @@
 package llparser.parse;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
 
 
 public class Token {
+    public static Token EMPTY = new Token(null, "", null);
+    public final String name;
     public final String v;
-    private Token(String v) {
+    private final List<Token> tokens;
+
+    private Token(String name, String v, List<Token> tokens) {
+        if (v == null && tokens == null) {
+            throw new IllegalArgumentException("both null(val, list)");
+        }
+        this.name = name;
         this.v = v;
+        this.tokens = tokens;
+    }
+    private Token(String v) {
+        this(null, v, null);
+    }
+
+    public Iterable<Token> tokens() {
+        return tokens;
+    }
+
+    public Token name(String name) {
+        return new Token(name, v, tokens);
+    }
+
+    public Optional<Token> get(int pos) {
+        if (tokens == null) {
+            return Optional.empty();
+        } else {
+            if (pos < tokens.size()) {
+                return Optional.of(tokens.get(pos));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+    public Token add(Token token) {
+        if (tokens != null) {
+            if (token != EMPTY) {
+                List<Token> l = new ArrayList<>();
+                l.addAll(tokens);
+                l.add(token);
+                return new Token(name, v, Collections.unmodifiableList(l));
+            } else {
+                return this;
+            }
+        } else {
+            return list(this, token);
+        }
     }
 
     @Override
     public String toString() {
-        return v;
+        final String body;
+        if (v != null) {
+            body = v;
+        } else if (tokens != null) {
+            body = tokens.toString();
+        } else {
+            body = "null";
+        }
+        if (name != null) {
+            return String.format("%s[%s]", name, body);
+        } else {
+            return body;
+        }
     }
 
 
     public static Token of(char c) {
         return new Token("" + c);
     }
+
     public static Token of(String s) {
+        if (s == null || s.isEmpty()) {
+            return EMPTY;
+        }
         return new Token(s);
     }
-    public static NamedToken of(String name, Token token) {
-        return new NamedToken(name, token);
-    }
 
-    public static ListToken list() {
-        return new ListToken();
-    }
-
-    // 非末端トークン
-    public static class ListToken extends Token {
-        private List<Token> tokens = new ArrayList<>();
-        public ListToken() {
-            super("");
-        }
-
-        public ListToken add(Token token) {
-            tokens.add(token);
-            return this;
-        }
-
-        public Optional<Token> get(final int i) {
-            if (i < 0  || tokens.size() <= i) {
-                return Optional.empty();
-            }
-            return Optional.ofNullable(tokens.get(i));
-        }
-
-        public Iterator<Token> iter() {
-            return tokens.iterator();
-        }
-    }
-
-    public static class NamedToken extends Token {
-        public final Token token;
-        public NamedToken(String name, Token token) {
-            super(name);
-            this.token = token;
-        }
-
-        public String name() {
-            return v;
-        }
+    public static Token list(Token ... tokens) {
+        List<Token> t = List.of(tokens).stream()
+                .filter(x -> x != EMPTY)
+                .collect(Collectors.toList());
+        return new Token(null, null, t);
     }
 }

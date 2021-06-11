@@ -5,42 +5,47 @@ import llparser.io.Pos;
 import llparser.utils.Result;
 
 public final class Parsers {
-    // スペーストークン
-    public static Parser<Token> named(final String name, final Parser<Token> p) {
+    private static void debug(String fmt, Object ... args) {
+        System.out.println(String.format(fmt, args));
+    }
+    // ネームドトークンに
+    public static Parser named(final String name, final Parser p) {
         return (final Input in) -> {
-            return p.parse(in).map(x -> Token.of(name, x));
+            return p.parse(in).map(x -> x.name(name));
         };
     }
 
     // スペーストークン
-    public static Parser<Token> sp = (final Input in) -> {
+    public static Parser sp = (final Input in) -> {
         Pos p = in.pos();
         final StringBuilder sb = new StringBuilder();
         char inChar = in.peek();
         while(isSp(inChar)) {
             sb.append(inChar);
-            inChar = in.peek();
             p = in.pos();
+            inChar = in.peek();
         }
         in.back(p);
+        debug("match spaces [%s]:[%c]", sb.toString(), inChar);
         return Result.ok(Token.of(sb.toString()));
     };
     // ID token
-    public static Parser<Token> id = (final Input in) -> {
+    public static Parser id = (final Input in) -> {
         Pos p = in.pos();
         final StringBuilder sb = new StringBuilder();
         char inChar = in.peek();
         while(isId(inChar, sb.length() == 0)) {
             sb.append(inChar);
-            inChar = in.peek();
             p = in.pos();
+            inChar = in.peek();
         }
         in.back(p);
+        debug("match id [%s]:[%c]", sb.toString(), inChar);
         return Result.ok(Token.of(sb.toString()));
     };
 
     // 指定文字列トークン
-    public static Parser<Token> word(final String word) {
+    public static Parser word(final String word) {
         return (in) -> {
             final Pos p = in.pos();
             boolean ok = true;
@@ -51,10 +56,12 @@ public final class Parsers {
                 sb.append(inChar);
                 if (inChar != ch) {
                     ok = false;
+                    debug("unmatch words %s %s", word, inChar);
                     break;
                 }
             }
             if (ok) {
+                debug("match words %s ", word);
                 return Result.ok(Token.of(word));
             } else {
                 final Pos ngPos = in.pos();
@@ -66,17 +73,21 @@ public final class Parsers {
 
     // 複合パーサー
     @SafeVarargs
-    public static <T extends Token> Parser<Token.ListToken> chain(final Parser<T> p1, final Parser<T> ... plist) {
+    public static Parser chain(final Object obj1, final Object ... objs) {
         return (in) -> {
             final Pos pos = in.pos();
-            final Result<T, ParseError> r1 = p1.parse(in);
+            final Result<Token, ParseError> r1 = w(obj1).parse(in);
+            debug("chain is %s", r1.isOk());
             return r1.then(ok1 -> {
-                final Token.ListToken ret = Token.list().add(ok1);
-                for (final Parser<T> p2 : plist) {
-                    final Result<T, ParseError> r2 = p2.parse(in);
+                debug("chain 1st step %s", ok1);
+                Token ret = Token.list(ok1);
+                for (final Object obj : objs) {
+                    final Result<Token, ParseError> r2 = w(obj).parse(in);
                     if (r2.isOk()) {
-                        ret.add(r2.ok());
+                        ret = ret.add(r2.ok());
+                        debug("chain step %s", ret);
                     } else {
+                        debug("chain bad %s %s", ret, in.pos());
                         in.back(pos);
                         return r2.map(x->null);
                     }
@@ -88,15 +99,15 @@ public final class Parsers {
     }
 
     // 分岐パーサー
-    public static <T extends Token> Parser<T> or(final Parser<T> p1, final Parser<T> p2) {
+    public static Parser or(final Parser p1, final Parser p2) {
         return (in) -> {
             final Pos pos = in.pos();
-            final Result<T, ParseError> r1 = p1.parse(in);
+            final Result<Token, ParseError> r1 = p1.parse(in);
             if (r1.isOk()) {
                 return r1;
             }
             in.back(pos);
-            final Result<T, ParseError> r2 = p2.parse(in);
+            final Result<Token, ParseError> r2 = p2.parse(in);
             if (r2.isOk()) {
                 return r2;
             }
@@ -105,22 +116,22 @@ public final class Parsers {
     }
 
     // ０以上
-    public static <T extends Token> Parser<Token.ListToken> many(final Parser<T> p) {
+    public static Parser many(final Parser p) {
         return (in) -> {
             Pos pos = in.pos();
-            final Token.ListToken l = Token.list();
-            Result<T, ParseError> r1 = p.parse(in);
+            Token l = Token.list();
+            Result<Token, ParseError> r1 = p.parse(in);
             if (r1.isErr()) {
                 in.back(pos);
                 return Result.ok(l);
             }
-            l.add(r1.ok());
+            l = l.add(r1.ok());
 
             while(r1.isOk()) {
                 pos = in.pos();
                 r1 = p.parse(in);
                 if (r1.isOk()) {
-                    l.add(r1.ok());
+                    l = l.add(r1.ok());
                 }
             }
             in.back(pos);
@@ -140,5 +151,18 @@ public final class Parsers {
             || ('A' <= ch && ch <= 'Z')
             || ('_' == ch )
             ;
+    }
+
+    // 簡便なビルダー
+    private static Parser w(final Object obj) {
+        if (obj instanceof String) {
+            return word(obj.toString());
+        } else if (obj instanceof Parser) {
+            @SuppressWarnings("unchecked")
+            final Parser p = (Parser)obj;
+            return p;
+        } else {
+            throw new IllegalArgumentException("obj=" + obj);
+        }
     }
 }

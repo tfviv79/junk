@@ -22,12 +22,17 @@ public class Pos {
         return row;
     }
 
-    public Pos clone() {
+    public Pos copy() {
         Pos p = new Pos();
         p.line = this.line;
         p.row = this.row;
         p.seek = this.seek;
         return p;
+    }
+
+    @Override
+    public String toString() {
+        return  String.format("Pos(%d, %d)", line, row);
     }
 
     char peek(final char ch) {

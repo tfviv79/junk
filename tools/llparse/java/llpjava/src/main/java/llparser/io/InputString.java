@@ -13,7 +13,7 @@ public class InputString implements Input {
 
     @Override
     public Pos pos() {
-        return pos.clone();
+        return pos.copy();
     }
 
     @Override
