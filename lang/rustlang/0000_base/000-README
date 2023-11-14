@@ -7,6 +7,8 @@
 
 * purpose
 
+* test run
+    cargo run --bin base
 
 * example command line of cargo
 	cargo doc
@@ -14,3 +16,4 @@
 	cargo build 
 	cargo bench
 	cargo test
+

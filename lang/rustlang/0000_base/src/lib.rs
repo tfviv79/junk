@@ -4,17 +4,6 @@
 //! assert_eq!(version(), "0.0.1")
 //! ```
 
-
-macro_rules! ignore {
-	($x:expr) => {
-		{
-			let _ = $x;
-			()
-		}
-	}
-}
-
-
 /// samples function
 /// ```
 /// use base::*;
@@ -39,3 +28,15 @@ mod test {
         assert_eq!(version(), "0.0.1");
     }
 }
+
+#[derive(Debug)]
+pub struct S1(i32);
+
+impl S1 {
+    pub fn new(n: i32) -> S1 {
+        S1(n)
+    }
+}
+
+#[derive(Debug)]
+pub struct S2(pub i32);
