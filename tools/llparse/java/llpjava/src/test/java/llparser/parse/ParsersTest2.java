@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,20 +20,20 @@ public class ParsersTest2 {
             Parsers.many(
                     Parsers.chain(
                         "import"
-                        , Parsers.sp.drop()
+                        , Parsers.spn.drop()
                         , Parsers.word("{").drop()
-                        , Parsers.sp.drop()
+                        , Parsers.spn.drop()
                         , Parsers.chain(
                             Parsers.id
                             , Parsers.many(
                                 Parsers.chain(
-                                    Parsers.sp.drop()
+                                    Parsers.spn.drop()
                                     , Parsers.word(",").drop()
-                                    , Parsers.sp.drop()
+                                    , Parsers.spn.drop()
                                     , Parsers.id
                                     )
                               )
-                            , Parsers.sp.drop()
+                            , Parsers.spn.drop()
                             , Parsers.word("}").drop()
                         ).flatR().name("names")
                     ).flat()
@@ -44,6 +45,7 @@ public class ParsersTest2 {
         assertEquals(true, val.isOk());
         val.map(v -> {
             assertEquals("imports", v.name);
+            assertEquals(true, v.get(0).isPresent());
             Token t = v.get(0).get();
             List<Token> tc = toList(t.tokens());
             assertEquals("import", tc.get(0).v);
@@ -53,6 +55,9 @@ public class ParsersTest2 {
             assertEquals("a", tcin.get(0).v);
             assertEquals("b", tcin.get(1).v);
             assertEquals("c", tcin.get(2).v);
+
+
+
             return v;
         });
     }

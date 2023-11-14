@@ -5,9 +5,13 @@ import llparser.io.Pos;
 import llparser.utils.Result;
 
 public final class Parsers {
+    public static boolean DEBUG = true;
     private static void debug(String fmt, Object ... args) {
-        System.out.println(String.format(fmt, args));
+        if (DEBUG) {
+            System.out.println(String.format(fmt, args));
+        }
     }
+
     // ネームドトークンに
     public static Parser named(final String name, final Parser p) {
         return (final Input in) -> {
@@ -15,7 +19,21 @@ public final class Parsers {
         };
     }
 
-    // スペーストークン
+    // スペーストークン(任意）
+    public static Parser spn = (final Input in) -> {
+        Pos p = in.pos();
+        final StringBuilder sb = new StringBuilder();
+        char inChar = in.peek();
+        while(isSp(inChar)) {
+            sb.append(inChar);
+            p = in.pos();
+            inChar = in.peek();
+        }
+        in.back(p);
+        debug("match spaces [%s]:[%c]", sb.toString(), inChar);
+        return Result.ok(Token.of(sb.toString()));
+    };
+    // スペーストークン(必須）
     public static Parser sp = (final Input in) -> {
         Pos p = in.pos();
         final StringBuilder sb = new StringBuilder();
@@ -26,6 +44,27 @@ public final class Parsers {
             inChar = in.peek();
         }
         in.back(p);
+        if (sb.length() == 0) {
+            return Result.ng(ParseError.syntax(p, "invalid sp char " + inChar));
+        }
+        debug("match spaces [%s]:[%c]", sb.toString(), inChar);
+        return Result.ok(Token.of(sb.toString()));
+    };
+
+    // NUMトークン
+    public static Parser num = (final Input in) -> {
+        Pos p = in.pos();
+        final StringBuilder sb = new StringBuilder();
+        char inChar = in.peek();
+        while(isNum(inChar)) {
+            sb.append(inChar);
+            p = in.pos();
+            inChar = in.peek();
+        }
+        in.back(p);
+        if (sb.length() == 0) {
+            return Result.ng(ParseError.syntax(p, "invalid num char " + inChar));
+        }
         debug("match spaces [%s]:[%c]", sb.toString(), inChar);
         return Result.ok(Token.of(sb.toString()));
     };
@@ -40,6 +79,9 @@ public final class Parsers {
             inChar = in.peek();
         }
         in.back(p);
+        if (sb.length() == 0) {
+            return Result.ng(ParseError.syntax(p, "invalid id char " + inChar));
+        }
         debug("match id [%s]:[%c]", sb.toString(), inChar);
         return Result.ok(Token.of(sb.toString()));
     };
@@ -99,19 +141,21 @@ public final class Parsers {
     }
 
     // 分岐パーサー
-    public static Parser or(final Parser p1, final Parser p2) {
+    public static Parser or(final Parser p1, final Parser ... p2) {
         return (in) -> {
             final Pos pos = in.pos();
             final Result<Token, ParseError> r1 = p1.parse(in);
             if (r1.isOk()) {
                 return r1;
             }
-            in.back(pos);
-            final Result<Token, ParseError> r2 = p2.parse(in);
-            if (r2.isOk()) {
-                return r2;
+            for (Parser pn : p2) {
+                in.back(pos);
+                final Result<Token, ParseError> r2 = pn.parse(in);
+                if (r2.isOk()) {
+                    return r2;
+                }
             }
-            return r2.mapErr(e -> e.chain(r1.ng()));
+            return r1;
         };
     }
 
@@ -144,11 +188,20 @@ public final class Parsers {
     private static boolean isSp(final char ch) {
         return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
     }
+    // NUM文字判定
+    private static boolean isNum(final char ch) {
+        return ('0' <= ch && ch <= '9');
+    }
+    // 英字判定
+    private static boolean isAlpha(final char ch) {
+        return ('a' <= ch && ch <= 'z')
+            || ('A' <= ch && ch <= 'Z')
+            ;
+    }
     // ID文字判定
     private static boolean isId(final char ch, final boolean isFirst) {
-        return (!isFirst && '0' <= ch && ch <= '9')
-            || ('a' <= ch && ch <= 'z')
-            || ('A' <= ch && ch <= 'Z')
+        return (!isFirst && isNum(ch))
+            || isAlpha(ch)
             || ('_' == ch )
             ;
     }
