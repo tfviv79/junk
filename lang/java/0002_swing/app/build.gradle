@@ -1,0 +1,23 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.guava:guava:31.0.1-jre'
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter('5.8.2')
+        }
+    }
+}
+
+application {
+    mainClass = 'Main'
+}
