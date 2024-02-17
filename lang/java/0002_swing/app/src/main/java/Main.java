@@ -16,6 +16,11 @@ import javax.swing.*;
  *   https://docs.oracle.com/javase/tutorial/uiswing/components/index.html
  *   https://docs.oracle.com/javase/tutorial/displayCode.html?code=https://docs.oracle.com/javase/tutorial/uiswing/examples/components/FileChooserDemoProject/src/components/FileChooserDemo.java
  *
+ *   http://kamifuji.dyndns.org/JSupport/JAVA_Swing/JTable/index.html#_0050
+ *
+ *   https://docs.oracle.com/javase/tutorial/uiswing/index.html
+ *   https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/java/awt/BorderLayout.html
+ *
  */
 public class Main {
     public static void main(String[] args) {
@@ -26,21 +31,87 @@ public class Main {
             }
         });
     }
+
+
+    public static void debug(String fmt, Object ... args) {
+        System.out.println(String.format(fmt, args));
+    }
+}
+
+
+class PageSwitcher {
+    private JPanel cardPanel;
+    private CardLayout cardLayout;
+    public PageSwitcher() {
+        this.cardPanel = new JPanel();
+        this.cardLayout = new CardLayout();
+        cardPanel.setLayout(cardLayout);
+    }
+
+    public JPanel panel() {
+        return cardPanel;
+    }
+
+    public PageSwitcher add(JPanel comp, String name) {
+        cardPanel.add(comp, name);
+        return this;
+    }
+
+    public void show(String name) {
+        cardLayout.show(cardPanel, name);
+        Main.debug("### switch %s page", name);
+    }
 }
 
 class MainFrame extends JFrame {
     public MainFrame() {
         super("Sample");
-
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        //Add content to the window.
-        add(new DisplayTsvFile());
+
+        var switcher = new PageSwitcher();
+
+        switcher.add(new DisplayTsvFile(switcher), "tsvPanel");
+        switcher.add(new SamplePanel(switcher), "sample");
+        switcher.show("tsvPanel");
+
+        add(switcher.panel());
+
         //Display the window.
         pack();
-
         setSize(600, 400);
         setVisible(true);
+    }
+}
+
+
+class SamplePanel extends JPanel implements ActionListener {
+    private PageSwitcher switcher;
+
+    public SamplePanel(PageSwitcher switcher) {
+        super(new BorderLayout());
+        this.switcher = switcher;
+
+        var changeButton = new JButton("toTsv");
+        changeButton.addActionListener(this);
+        changeButton.setActionCommand("tsvPanel");
+
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BorderLayout());
+        buttonPanel.add(changeButton, BorderLayout.EAST);
+        add(buttonPanel, BorderLayout.PAGE_START);
+
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        final String command = e.getActionCommand();
+        switch (command) {
+            case "tsvPanel":
+                this.switcher.show("tsvPanel");
+                break;
+        }
     }
 }
 
@@ -78,9 +149,11 @@ class DisplayTsvFile extends JPanel implements ActionListener {
     JButton openButton;
     TsvTable tsvTable;
     JFileChooser fc;
+    private PageSwitcher switcher;
 
-    public DisplayTsvFile() {
+    public DisplayTsvFile(PageSwitcher switcher) {
         super(new BorderLayout());
+        this.switcher = switcher;
 
         tsvTable = new TsvTable();
         JScrollPane logScrollPane = new JScrollPane(tsvTable);
@@ -90,23 +163,36 @@ class DisplayTsvFile extends JPanel implements ActionListener {
 
         openButton = new JButton("Open a File...");
         openButton.addActionListener(this);
+        openButton.setActionCommand("openFile");
+
+        var changeButton = new JButton("toSample");
+        changeButton.addActionListener(this);
+        changeButton.setActionCommand("sample");
+
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BorderLayout());
-        buttonPanel.add(openButton);
+        buttonPanel.add(openButton, BorderLayout.WEST);
+        buttonPanel.add(changeButton, BorderLayout.EAST);
         add(buttonPanel, BorderLayout.PAGE_START);
         add(logScrollPane, BorderLayout.CENTER);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == openButton) {
-            int returnVal = fc.showOpenDialog(this);
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
-                TsvFile tsvFile = TsvFile.load(file);
-                tsvTable.setData(tsvFile);
-            }
+        final String command = e.getActionCommand();
+        switch (command) {
+            case "openFile":
+                int returnVal = fc.showOpenDialog(this);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File file = fc.getSelectedFile();
+                    TsvFile tsvFile = TsvFile.load(file);
+                    tsvTable.setData(tsvFile);
+                }
+                break;
+            case "sample":
+                this.switcher.show("sample");
+                break;
         }
     }
 }
