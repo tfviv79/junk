@@ -1,0 +1,70 @@
+Sub ExtractDataFromCellPath()
+  Dim path As String
+  Dim sheet As Worksheet
+  Dim outsheet As Worksheet
+  Dim fs As FileSystemObject
+  Dim outrow As Integer
+  outrow = 1
+
+
+  Set sheet = ThisWorkbook.ActiveSheet
+  path = sheet.Cells(2, 2).Value
+  Set fs = New FileSystemObject
+
+
+  'Debug.Print "extract " & path
+
+  Application.ScreenUpdating = False
+  Set outsheet = ThisWorkbook.Sheets.Add
+
+  Call ExtractDataFromPath(fs.GetFolder(path), outsheet, outrow)
+  Application.ScreenUpdating = False
+End Sub
+
+
+Sub ExtractDataFromPath(ByVal path As Object, ByRef outsheet As Worksheet, ByRef outrow As Integer)
+  Dim objFolderSub As Folder
+  Dim objFile As File
+  For each objFile In path.Files
+    Debug.Print "Debug: file " & objFile.Type & " " & objFile.path
+    If InStr(objFile.Type, "Excel") Then
+      Call ExtractDataFromFile(objFile, outsheet, outrow)
+    End If
+  Next
+
+  For each objFolderSub In path.subFolders
+    If Not objFolderSub.Name = "old" Then
+      Call ExtractDataFromPath(objFolderSub, outsheet, outrow)
+    End If
+  Next
+End Sub
+
+
+Sub ExtractDataFromFile(ByVal objFile As File, ByRef outsheet As Worksheet, ByRef outrow As Integer)
+  Dim Target As Workbook
+  Dim sheet As Worksheet
+  Dim currow As Integer
+  Dim i As Integer
+  Dim no As String
+  Dim dataContent As String
+
+  Set Trarget = Workbooks.Open(Filename:=objFile.path, UpdateLinks:=0)
+
+  Set sheet = Target.Sheets("hogehoge")
+  currow = 1
+  For i = 0 To 1000
+    no = sheet.Range("A" & currow).Value
+    if no <> "" Then
+      dataContent = sheet.Range("B" & currow).Value
+
+      outsheet.Cells(outrow, 1).Value = no
+      outsheet.Cells(outrow, 2).Value = dataContent
+      outrow = outrow + 1
+    Else
+      Exit For
+    End If
+    currow = currow + 1
+  Next i
+  Target.close SaveChanges := False
+End Sub
+
