@@ -1,0 +1,168 @@
+/*
+  Made by Elly Loel - https://ellyloel.com/
+  参考記事:
+    - Josh W Comeau - https://courses.joshwcomeau.com/css-for-js/treasure-trove/010-global-styles/
+    - Andy Bell - https://piccalil.li/blog/a-modern-css-reset/
+    - Adam Argyle - https://unpkg.com/open-props@1.3.16/normalize.min.css / https://codepen.io/argyleink/pen/KKvRORE
+  メモ:
+    - :where()は簡単に上書きできるように詳細度を低くするために使用しています。
+*/
+
+* {
+  /* すべてのデフォルトのマージンを削除 */
+  margin: 0;
+  /* すべてのデフォルトのパディングを削除 */
+  padding: 0;
+  /* line-heightをemベースでcalc()で計算。font-sizeを小さくするとline-heightは大きくなり、font-sizeを大きくするとline-heightは小さくなります。参考: https://kittygiraudel.com/2020/05/18/using-calc-to-figure-out-optimal-line-height/ */
+  line-height: calc(0.25rem + 1em + 0.25rem);
+}
+
+/* より直感的なボックスサイズのモデルを使用 */
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+/* fieldset, progress, meter以外のすべての要素でボーダーを削除し、背景に適切なデフォルトを設定 */
+*:where(:not(fieldset, progress, meter)) {
+  border-width: 0;
+  border-style: solid;
+  background-origin: border-box;
+  background-repeat: no-repeat;
+}
+
+html {
+  /* アプリケーションでパーセントによる高さを許可する  */
+  block-size: 100%;
+  /* テキストのサイズはfont-sizeのみで制御されるようにする */
+  -webkit-text-size-adjust: none;
+}
+
+/* 減速を好まないユーザーのためにスムーズなスクロールを実現 */
+@media (prefers-reduced-motion: no-preference) {
+  html:focus-within {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  /* テキストのレンダリングを改善 */
+  -webkit-font-smoothing: antialiased;
+  /* https://marco.org/2012/11/15/text-rendering-optimize-legibility */
+  text-rendering: optimizeSpeed;
+  /* アプリケーションでパーセントによる高さを許可する */
+  min-block-size: 100%;
+  /* https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-gutter#example_2 */
+  /* scrollbar-gutter: stable both-edges; バグが修正されるまで削除: https://bugs.chromium.org/p/chromium/issues/detail?id=1318404#c2 */
+}
+
+/* 各メディア要素のデフォルトを改善 */
+:where(img, svg, video, canvas, audio, iframe, embed, object) {
+  display: block;
+}
+:where(img, svg, video) {
+  block-size: auto;
+  max-inline-size: 100%;
+}
+
+/* ストロークを削除し、fillの塗りつぶしカラーはフォントカラーを継承 */
+:where(svg) {
+  stroke: none;
+  fill: currentColor;
+}
+
+/* fill属性のないSVG */
+:where(svg):where(:not([fill])) {
+  /* fillを取り除き、ストロークのカラーはフォントカラーを継承 */
+  stroke: currentColor;
+  fill: none;
+  /* 丸みを帯びたストローク */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* width属性のないSVGのサイズを設定 */
+:where(svg):where(:not([width])) {
+  inline-size: 5rem;
+}
+
+/* フォーム内のタイポグラフィのスタイルを削除 */
+:where(input, button, textarea, select),
+:where(input[type="file"])::-webkit-file-upload-button {
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+
+/* textareaのサイズ変更は垂直のみにし、ブラウザがサポートしている場合にのみblockにします */
+:where(textarea) {
+  resize: vertical;
+}
+@supports (resize: block) {
+  :where(textarea) {
+    resize: block;
+  }
+}
+
+/* テキストのオーバーフローを回避 */
+:where(p, h1, h2, h3, h4, h5, h6) {
+  overflow-wrap: break-word;
+}
+
+/* article、aside、nav、section内のh1フォントサイズを修正 */
+h1 {
+  font-size: 2em;
+}
+
+/* リストの役割をするul、ol要素のリストスタイルを削除。デフォルトのスタイルが削除されることを示唆しています */
+:where(ul, ol)[role="list"] {
+  list-style: none;
+}
+
+/* クラスを持たないアンカータグに、より読みやすい下線スタイルを設定。アンカータグに設定することもできますが、コンフリクトを引き起こす可能性があります */
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+
+/* インタラクティブな要素は適切なカーソルを設定して操作できることを明確にする */
+:where(a[href], area, button, input, label[for], select, summary, textarea, [tabindex]:not([tabindex*="-"])) {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+:where(input[type="file"]) {
+  cursor: auto;
+}
+:where(input[type="file"])::-webkit-file-upload-button,
+:where(input[type="file"])::file-selector-button {
+  cursor: pointer;
+}
+
+/* フォーカスのアウトラインをアニメーション化 */
+@media (prefers-reduced-motion: no-preference) {
+  :focus-visible {
+    transition: outline-offset 145ms cubic-bezier(0.25, 0, 0.4, 1);
+  }
+  :where(:not(:active)):focus-visible {
+    transition-duration: 0.25s;
+  }
+}
+:where(:not(:active)):focus-visible {
+  outline-offset: 5px;
+}
+
+/* ユーザーがボタンのテキストを選択できないようにする */
+:where(button, button[type], input[type="button"], input[type="submit"], input[type="reset"]),
+:where(input[type="file"])::-webkit-file-upload-button,
+:where(input[type="file"])::file-selector-button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  text-align: center;
+}
+
+/* 無効化されたボタンには無効化されたカーソルを表示 */
+:where(button, button[type], input[type="button"], input[type="submit"], input[type="reset"])[disabled] {
+  cursor: not-allowed;
+}
