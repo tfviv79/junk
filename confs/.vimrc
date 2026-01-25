@@ -78,6 +78,7 @@ noremap <Leader>q :n ~/Documents/TODO.txt<CR>
 noremap <Leader>w :n ~/Documents/memo.txt<CR>
 noremap <Leader>b :terminal git blame %<CR>
 noremap <Leader>c :<C-u>setlocal cursorline! cursorcolumn!<CR>
+noremap <Leader>g :grep -r <cword> ./
 
 vnoremap <Leader>j :s/<Space>/<TAB>/g<CR>
 vnoremap <Leader>k :s/<Space>\+\|<Space>\+/<TAB>/g<CR>
