@@ -1,7 +1,7 @@
 " vim: set foldmethod=marker:
 
-filetype off
-filetype plugin indent off
+filetype on 
+filetype plugin indent on
 
 
 " reset augroup
@@ -9,25 +9,34 @@ augroup MyAutoCmd
     autocmd!
 augroup END
 
-set expandtab
-set smarttab
-set smartcase
 set tabstop=4
 set shiftwidth=4
 set softtabstop=4
+set autoindent
+set smartindent
+set expandtab
+set smartcase
 "set nowrap
+
 set number
 set relativenumber
-set list
-set listchars=tab:>-,trail:-,eol:$,nbsp:%
+set hlsearch
+nmap <Esc><Esc> :nohlsearch<CR><Esc>
+set noswapfile
+set nobackup
 set nofixeol
-set title
 set foldmethod=indent
 set foldlevel=9999
 
+"不可視文字(tab とか)の可視化
+set list
+set listchars=tab:>-,trail:-,nbsp:%,extends:>,precedes:<,eol:$
+set title
+
 set encoding=utf-8
-set fileencodings=iso-2022-jp,euc-jp,cp932,utf-8
+set fileencodings=utf-8,iso-2022-jp,cp932,euc-jp
 set fileformats=unix,dos,mac
+set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%02.2B]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]
 
 au FileType make setlocal noexpandtab nosmarttab
 au FileType vue setlocal tabstop=2 shiftwidth=2 softtabstop=2
@@ -35,7 +44,7 @@ au FileType typescript setlocal tabstop=2 shiftwidth=2 softtabstop=2
 au FileType javascript setlocal tabstop=2 shiftwidth=2 softtabstop=2
 au FileType yaml setlocal tabstop=2 shiftwidth=2 softtabstop=2
 
-syntax enable
+syntax on
 set background=dark
 
 "## yank to os clipboard
@@ -66,20 +75,19 @@ inoremap <C-l><C-n> <C-R>=strftime("##NOTE## [%Y-%m-%d %H:%M:%S]")<CR>
 inoremap <C-l><C-j> <C-R>=strftime("[%Y-%m-%d %H:%M:%S]{{{\n\n}}}\n")<CR><Up><Up>
 "" inoremap <C-l><C-u> <Esc>k:r!uuidgen<CR>A
 "" insert filename path
-inoremap <C-l><C-f> <C-R>=expand("%:p")<CR>
 "" open current file directory
 noremap <C-l><C-o> :Explore %:h<CR>
 noremap <C-l><C-l> :lcd %:h<CR>
 noremap <C-l><C-f> :let @* = expand("%") . ':' . line('.') . "\n"<CR>
-noremap <C-l><C-g> :let @* = expand("%:p") . "\n"<CR>
+noremap <C-l><C-g> :let @* = expand("%:p") . ':' . line('.') . "\n"<CR>
 
 
 noremap <Leader>q :n ~/Documents/TODO.txt<CR>
 noremap <Leader>w :n ~/Documents/memo.txt<CR>
-noremap <Leader>b :terminal git blame %<CR>
-noremap <Leader>c :<C-u>setlocal cursorline! cursorcolumn!<CR>
 noremap <Leader>g :grep -r <cword> ./
 
+noremap <Leader>c :<C-u>setlocal cursorline! cursorcolumn!<CR>
+noremap <Leader>b :terminal git blame %<CR>
 vnoremap <Leader>j :s/<Space>/<TAB>/g<CR>
 vnoremap <Leader>k :s/<Space>\+\|<Space>\+/<TAB>/g<CR>
 
