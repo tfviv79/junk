@@ -1,0 +1,37 @@
+services:
+  db:
+    image: "postgres:18.6"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/db/initdb:/docker-entrypoint-initdb.d
+      - db:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydb
+  api:
+    build:
+      context: ./docker/
+      dockerfile: ./api/Dockerfile
+    volumes:
+      - ./src/api:/opt/app/api
+      - app_home_api:/home/app
+    ports:
+      - "8080:8080"
+    # command: "sleep"
+  front:
+    build:
+      context: ./docker/
+      dockerfile: ./front/Dockerfile
+    volumes:
+      - ./src/front:/opt/app/front
+      - app_home_front:/home/app
+    ports:
+      - "4200:4200"
+    # command: "sleep"
+
+volumes:
+  db:
+  app_home_api:
+  app_home_front:

@@ -1,0 +1,20 @@
+[tools]
+java = "21.0.2"
+node = "24.19.0"
+
+[tasks.create_env]
+run = "echo DOCKER_UID=$(id -u) >> .env && echo DOCKER_GID=$(id -g) >> .env"
+
+[tasks.up]
+run = "docker compose up -d"
+
+[tasks.down]
+run = "docker compose down"
+
+[tasks.logs]
+run = "docker compose logs -f"
+
+[tasks.db]
+# mise run -r db
+run = "docker compose exec db psql -Upostgres mydb "
+
