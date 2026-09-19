@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
-import { Home } from './pages/home/home';
+import { HomePage } from './pages/home/home';
+import { ChartDashboardPage } from './pages/chart/chartdashboard.component';
 
 export const routes: Routes = [
-  { path: '', component: Home}
-
+  { path: '', component: HomePage },
+  { path: 'chart', component: ChartDashboardPage },
 ];
