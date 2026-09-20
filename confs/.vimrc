@@ -95,3 +95,16 @@ cnoremap <C-a> <Home>
 cnoremap <C-e> <End>
 cnoremap <C-f> <Right>
 cnoremap <C-b> <Left>
+
+highlight DiffAdd    cterm=bold ctermfg=10 ctermbg=22
+highlight DiffDelete cterm=bold ctermfg=10 ctermbg=52
+highlight DiffChange cterm=bold ctermfg=10 ctermbg=17
+highlight DiffText   cterm=bold ctermfg=10 ctermbg=21
+
+
+"" for quickfix 
+augroup MyQuickfixSettings
+  autocmd!
+  autocmd BufReadPost quickfix setlocal modifiable
+  autocmd BufReadPost quickfix nnoremap <buffer> <Leader>u :cbuffer<CR>
+augroup END
