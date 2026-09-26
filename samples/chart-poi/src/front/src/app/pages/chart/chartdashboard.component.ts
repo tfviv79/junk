@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, resource } from '@angular/core';
 import { CMN_IMPORTS } from '@/common';
 import { Chart } from '@/app/parts/chart/chart.component';
+import { api } from '@/api';
 
 
 @Component({
@@ -9,7 +10,7 @@ import { Chart } from '@/app/parts/chart/chart.component';
   styleUrl: './chartdashboard.component.scss',
   imports: [ Chart, ... CMN_IMPORTS ],
 })
-export class ChartDashboardPage {
+export class ChartDashboardPage implements OnInit {
   config = {
     type: 'bar',
     data: {
@@ -27,6 +28,25 @@ export class ChartDashboardPage {
         }
       }
     }
+  }
+  rawsResource = resource({
+    params: undefined,
+    loader: async () => {
+      const raws = await api.getRaws();
+      console.info(raws);
+      return raws
+    }
+  })
+  histResource = resource({
+    params: undefined,
+    loader: async () => {
+      const hist = await api.getReHistogram();
+      console.info(hist);
+      return hist
+    }
+  })
+
+  ngOnInit(): void {
   }
 }
 

@@ -7,5 +7,6 @@ import java.util.List;
  */
 public interface StatsRepository {
     List<Raw> findRaws(int limit);
+    List<ReHistogram> findReHistograms();
 }
 

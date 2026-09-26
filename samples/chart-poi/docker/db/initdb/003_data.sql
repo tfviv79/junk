@@ -1,0 +1,1 @@
+insert into re1 (id, year, re) select id, year, re from re;

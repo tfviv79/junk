@@ -15,8 +15,13 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public List<Raw> findRaw(int limit) {
+    public List<Raw> findRaws(int limit) {
         return repo.findRaws(limit);
+    }
+
+    @Override
+    public List<ReHistogram> findReHistograms() {
+        return repo.findReHistograms();
     }
 }
 

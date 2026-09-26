@@ -1,0 +1,20 @@
+{
+	"name": "api",
+
+	"dockerComposeFile": [
+		"../../compose.yaml"
+	],
+
+	"service": "api",
+	"workspaceFolder": "/opt/app/api",
+    "remoteUser": "app",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"vscjava.vscode-java-pack",
+				"vmware.vscode-boot-dev-pack"
+			]
+		}
+	}
+}

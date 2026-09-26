@@ -6,6 +6,7 @@ import java.util.List;
  * StatsService
  */
 public interface StatsService {
-    List<Raw> findRaw(int limit);
+    List<Raw> findRaws(int limit);
+    List<ReHistogram> findReHistograms();
 }
 

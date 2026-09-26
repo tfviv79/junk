@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.example.myapp.domain.Raw;
+import com.example.myapp.domain.ReHistogram;
 import com.example.myapp.domain.StatsRepository;
 
 @Repository
@@ -49,4 +50,10 @@ public class StatsRepositoryImpl implements StatsRepository {
         limit
         );
 	}
+
+    public List<ReHistogram> findReHistograms() {
+        return jdbc.query("""
+            select re_rank, count(id) from re1 group by re_rank order by re_rank;
+            """, (rs, rowNum) -> ReHistogram.from(rs));
+    }
 }
