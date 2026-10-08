@@ -2,7 +2,11 @@
 <a routerLink="/" >To menu</a>
 <div style="height:50vh; width: 50vw;">
   <chart [config]=config></chart>
-  <chart [config]=config></chart>
-  <chart [config]=config></chart>
-  <chart [config]=config></chart>
+  @if (histResource.hasValue()) {
+  <chart
+    [width]=600 [height]=200
+    [config]=histResource.value()></chart>
+  } @else {
+    Loading...
+  }
 </div>

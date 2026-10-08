@@ -1,1 +1,11 @@
-<canvas #chart></canvas>
+<canvas #chart
+  [width]=width()
+  [height]=height()
+></canvas>
+@for (fmt of imgInfo(); track fmt.format) {
+<div>
+format: {{ fmt.format }}
+size: {{ fmt.size | number: '1.2-2' }} kiB
+</div>
+<!-- img [src]=fmt.data -->
+}

@@ -28,8 +28,9 @@ public class StatsController {
     }
 
     @GetMapping("/api/re_histogram")
-    public ResponseEntity<ReHistogramResponse> hist() {
+    public ResponseEntity<ReHistogramResponse> hist() throws InterruptedException {
         List<ReHistogram> reHistograms = service.findReHistograms();
+        Thread.sleep(1000);
 
         return ResponseEntity.ok().body(new ReHistogramResponse(reHistograms));
     }
