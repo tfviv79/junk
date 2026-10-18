@@ -8,5 +8,7 @@ import java.util.List;
 public interface StatsRepository {
     List<Raw> findRaws(int limit);
     List<ReHistogram> findReHistograms();
+    List<ReHistogramWithRank> findReHistogramsWithRank(int rank);
+
 }
 

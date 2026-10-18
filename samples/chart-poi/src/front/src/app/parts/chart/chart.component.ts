@@ -1,17 +1,21 @@
 import {
-  Component,
   AfterViewInit,
-  ViewChild,
+  Component,
   ElementRef,
   input,
+  output,
   signal,
+  ViewChild,
 } from '@angular/core';
 import {
   DecimalPipe,
 } from '@angular/common';
-import { Chart as ChartJs, registerables } from 'chart.js';
+import { ChartEvent, Chart as ChartJs, registerables } from 'chart.js';
+import { getRelativePosition } from 'chart.js/helpers';
 
 ChartJs.register(...registerables);
+
+export type ClickEvent = {label: string, value: number|string}
 
 @Component({
   selector: 'chart',
@@ -21,8 +25,8 @@ ChartJs.register(...registerables);
 })
 export class Chart implements AfterViewInit {
   config = input<any>();
-  width = input<number>(200);
-  height = input<number>(200);
+
+  clickDataset = output<ClickEvent>();
 
   @ViewChild('chart') chart?: ElementRef;
 
@@ -64,6 +68,31 @@ export class Chart implements AfterViewInit {
     if (!config.options) {
       config.options = {}
     }
+    config.options = {...config.options,
+      onClick: (e: ChartEvent, _elm: unknown, chart: any) => {
+        console.debug("click events", e);
+        if (!this.chartObj) {
+          return;
+        }
+        const activeElms = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
+        if (activeElms.length > 0) {
+          const aelm = activeElms[0];
+          const datasetIndex = aelm.datasetIndex;
+          const index = aelm.index;
+          const label = chart.data.labels[index];
+          const value = chart.data.datasets[datasetIndex].data[index];
+          console.debug("click events: activeData", aelm, label, value);
+          this.clickDataset.emit({label, value});
+        }
+
+        const canvasPosition = getRelativePosition(e, this.chartObj);
+
+        // Substitute the appropriate scale IDs
+        const dataX = this.chartObj.scales['x'].getValueForPixel(canvasPosition.x);
+        const dataY = this.chartObj.scales['y'].getValueForPixel(canvasPosition.y);
+        console.debug("click events: data", dataX, dataY);
+      },
+    }
     if (!config.animation) {
       config.options.animation = {onComplete: undefined}
     }
@@ -87,6 +116,8 @@ export class Chart implements AfterViewInit {
       ]);
     }}
 
-    this.chartObj = new ChartJs(this.chartCtx, config)
+    this.chartObj = new ChartJs(this.chartCtx, {
+      ...config,
+    })
   }
 }

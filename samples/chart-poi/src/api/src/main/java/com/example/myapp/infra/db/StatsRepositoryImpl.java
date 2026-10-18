@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.myapp.domain.Raw;
 import com.example.myapp.domain.ReHistogram;
+import com.example.myapp.domain.ReHistogramWithRank;
 import com.example.myapp.domain.StatsRepository;
 
 @Repository
@@ -55,5 +56,16 @@ public class StatsRepositoryImpl implements StatsRepository {
         return jdbc.query("""
             select re_rank, count(id) from re1 group by re_rank order by re_rank;
             """, (rs, rowNum) -> ReHistogram.from(rs));
+    }
+
+    public List<ReHistogramWithRank> findReHistogramsWithRank(int rank) {
+        return jdbc.query("""
+            select cps.*
+            from cps_controls cps
+            join (select distinct id from re1 where re_rank = ?) target_ids on target_ids.id =cps.id
+            order by id;
+            """, (rs, rowNum) -> ReHistogramWithRank.from(rs)
+            , rank
+        );
     }
 }

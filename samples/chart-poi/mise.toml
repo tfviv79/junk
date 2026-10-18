@@ -1,5 +1,5 @@
 [tools]
-java = "21.0.2"
+java = "21"
 node = "24.19.0"
 
 [tasks.create_env]

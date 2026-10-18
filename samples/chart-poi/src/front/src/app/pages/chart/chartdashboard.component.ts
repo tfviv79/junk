@@ -1,6 +1,6 @@
-import { Component, OnInit, resource } from '@angular/core';
+import { Component, OnInit, resource, signal } from '@angular/core';
 import { CMN_IMPORTS } from '@/common';
-import { Chart } from '@/app/parts/chart/chart.component';
+import { Chart, ClickEvent } from '@/app/parts/chart/chart.component';
 import { api } from '@/api';
 
 
@@ -31,7 +31,7 @@ export class ChartDashboardPage implements OnInit {
       }]
     },
     options: {
-      devicePixelRatio: 0.5,
+      devicePixelRatio: 1,
       scales: {
         y: {
           beginAtZero: true
@@ -39,6 +39,8 @@ export class ChartDashboardPage implements OnInit {
       }
     }
   }
+
+  histDetailRe = signal<number|string|null>(null)
 
   rawsResource = resource({
     params: undefined,
@@ -78,7 +80,45 @@ export class ChartDashboardPage implements OnInit {
     }
   })
 
+  histDetailResource = resource({
+    params: this.histDetailRe,
+    loader: async () => {
+      if (this.histDetailRe() === null) {
+        return
+      }
+      const hist = await api.getReHistogramWithRank(this.histDetailRe() as string);
+      return {
+        type: 'bar',
+        data: {
+          labels: hist.raws.map((x) => x.age),
+          datasets: [{
+            label: "rank vs count",
+            data: hist.raws.map((x) => [x.re74, x.re75, x.re78]),
+          }],
+        },
+        options: {
+          events: ['click'],
+          devicePixelRatio: 3.5,
+        },
+        plugins: [
+          {
+            id: "myeventer",
+            beforeEvent(chart: any, args: any, pluginOptions: any) {
+              const event = args.event;
+              console.log("event:", event, chart, args, pluginOptions);
+            }
+          },
+        ],
+      }
+    },
+  })
+
   ngOnInit(): void {
+  }
+
+  datasetHandler(val: ClickEvent): void {
+    console.debug("receive event", val);
+    this.histDetailRe.set(val.label)
   }
 }
 

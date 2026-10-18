@@ -23,5 +23,10 @@ public class StatsServiceImpl implements StatsService {
     public List<ReHistogram> findReHistograms() {
         return repo.findReHistograms();
     }
+
+    @Override
+    public List<ReHistogramWithRank> findReHistogramsWithRank(int rank) {
+        return repo.findReHistogramsWithRank(rank);
+    }
 }
 
