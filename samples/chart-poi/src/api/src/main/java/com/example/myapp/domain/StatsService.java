@@ -1,6 +1,7 @@
 package com.example.myapp.domain;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * StatsService
@@ -8,6 +9,6 @@ import java.util.List;
 public interface StatsService {
     List<Raw> findRaws(int limit);
     List<ReHistogram> findReHistograms();
-    List<ReHistogramWithRank> findReHistogramsWithRank(int rank);
+    Map<String, List<ReHistogramWithRank>> findReHistogramsWithRank(int rank);
 }
 

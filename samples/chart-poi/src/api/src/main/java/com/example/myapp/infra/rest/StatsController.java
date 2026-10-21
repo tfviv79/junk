@@ -1,6 +1,7 @@
 package com.example.myapp.infra.rest;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -40,7 +41,7 @@ public class StatsController {
 
     @GetMapping("/re_histogram/{rank}")
     public ResponseEntity<ReHistogramWithRankResponse> histWithRank(@PathVariable("rank") int rank) throws InterruptedException {
-        final List<ReHistogramWithRank> reHistograms = service.findReHistogramsWithRank(rank);
+        final Map<String, List<ReHistogramWithRank>> reHistograms = service.findReHistogramsWithRank(rank);
         Thread.sleep(1000);
         return ResponseEntity.ok().body(new ReHistogramWithRankResponse(reHistograms));
     }

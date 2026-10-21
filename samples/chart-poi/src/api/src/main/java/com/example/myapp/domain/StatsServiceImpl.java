@@ -1,6 +1,7 @@
 package com.example.myapp.domain;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public List<ReHistogramWithRank> findReHistogramsWithRank(int rank) {
+    public Map<String, List<ReHistogramWithRank>> findReHistogramsWithRank(int rank) {
         return repo.findReHistogramsWithRank(rank);
     }
 }
