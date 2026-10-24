@@ -68,15 +68,12 @@ export class ChartDashboardPage implements OnInit {
       }
       const hist = await api.getReHistogramWithRank(this.histDetailRe() as string);
 
-      const gen_bar = function(opts: any, labels: (string|number)[], data: number[]) {
+      const gen_bar = function(opts: any, labels: (string|number)[], dataset: {label: string|number, data: number[]}[]) {
         return {
           type: 'bar',
           data: {
             labels: labels,
-            datasets: [{
-              label: "rank vs count",
-              data: data,
-            }],
+            datasets: dataset,
           },
           options: {
             events: ['click'],
@@ -95,20 +92,33 @@ export class ChartDashboardPage implements OnInit {
         }
       }
 
-      const age = gen_bar({}, hist.raws.age.map((x) => x.key), hist.raws.age.map((x) => x.count))
-      const black = gen_bar({
+      function* iterzip<T, U>(arr1: T[], arr2: U[]): Generator<[T, U]> {
+        const length = Math.min(arr1.length, arr2.length)
+        for (let i=0; i< length; i++) {
+          yield [arr1[i], arr2[i]]
+        }
+      }
+
+      const age = gen_bar({}, hist.raws.age.map((x) => x.key),
+        [{
+          label: "age vs count",
+          data: hist.raws.age.map((x) => x.count),
+        }])
+      const binbar = gen_bar({
         options: {
           scales: {
             x: { stacked: true, },
             y: { stacked: true, },
           }
         }
-      }, hist.raws.black.map((x) => x.key), hist.raws.black.map((x) => x.count))
+      }, ['black', 'hispanic'],
+        Array.from(iterzip(hist.raws.black, hist.raws.hispanic)).map((arr) => ({ label: arr[0].key, data: arr.map((x) => x.count) }))
+      )
 
 
       return {
         age,
-        black,
+        binbar,
       }
     },
   })
