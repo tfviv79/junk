@@ -29,6 +29,7 @@ services:
       - app_home_front:/home/app
     ports:
       - "4200:4200"
+      - "4206:6006"
     # command: "sleep"
 
 volumes:

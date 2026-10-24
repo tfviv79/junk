@@ -20,3 +20,18 @@ run = "docker compose logs -f"
 raw = true
 run = "docker compose exec db psql -Upostgres mydb "
 
+[tasks.fe]
+raw = true
+run = "docker compose exec front /bin/bash "
+
+[tasks.be]
+raw = true
+run = "docker compose exec api /bin/bash "
+
+[tasks.story]
+raw = true
+run = "docker compose exec front npm run storybook"
+
+[tasks.build-story]
+raw = true
+run = "docker compose exec front npm run build-storybook"

@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "storybook": "ng run myapp:storybook",
+    "storybook": "ng run myapp:storybook --host 0.0.0.0",
     "build-storybook": "ng run myapp:build-storybook"
   },
   "private": true,
