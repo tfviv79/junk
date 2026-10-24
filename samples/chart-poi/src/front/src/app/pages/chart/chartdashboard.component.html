@@ -1,10 +1,7 @@
 
 <a routerLink="/" >To menu</a>
-<div style="width: 300px;">
-  <chart [config]=config />
-</div>
 @if (histResource.hasValue()) {
-<div style="width: 300px;">
+<div style="width: 400px;">
   <chart [config]=histResource.value()
     (clickDataset)="datasetHandler($event)"
     />
@@ -12,12 +9,13 @@
 } @else {
   Loading...
 }
-{{ histDetailResource.value() }}
 @if (histDetailResource.hasValue()) {
 <div style="width: 300px;">
-  <chart [config]=histDetailResource.value()
+  <chart [config]=histDetailResource.value().age
     />
 </div>
-} @else {
-  Loading...
+<div style="width: 300px;">
+  <chart [config]=histDetailResource.value().black
+    />
+</div>
 }

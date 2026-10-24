@@ -17,9 +17,24 @@ interface Raws {
   re78: number
 }
 
-interface ReHistWithDetailRes {
-  raws: Raws[]
+interface HistDetail {
+  name: string
+  key: number | string
+  count: number
 }
+
+interface ReHistWithDetailRes {
+  raws: {
+    age: HistDetail[]
+    black: HistDetail[]
+    education: HistDetail[]
+    hispanic: HistDetail[]
+    married: HistDetail[]
+    nodegree: HistDetail[]
+    treat: HistDetail[]
+  }
+}
+
 
 class ApiClient {
   async getRaws() {

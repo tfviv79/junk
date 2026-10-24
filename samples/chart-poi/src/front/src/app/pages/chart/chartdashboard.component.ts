@@ -20,26 +20,6 @@ interface ReHistRes {
   imports: [ Chart, ... CMN_IMPORTS ],
 })
 export class ChartDashboardPage implements OnInit {
-  config = {
-    type: 'bar',
-    data: {
-      labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-      datasets: [{
-        label: '# of Votes',
-        data: [12, 19, 3, 5, 2, 3],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      devicePixelRatio: 1,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  }
-
   histDetailRe = signal<number|string|null>(null)
 
   rawsResource = resource({
@@ -65,7 +45,7 @@ export class ChartDashboardPage implements OnInit {
         },
         options: {
           events: ['click'],
-          devicePixelRatio: 3.5,
+          devicePixelRatio: 1.5,
         },
         plugins: [
           {
@@ -87,28 +67,48 @@ export class ChartDashboardPage implements OnInit {
         return
       }
       const hist = await api.getReHistogramWithRank(this.histDetailRe() as string);
-      return {
-        type: 'bar',
-        data: {
-          labels: hist.raws.map((x) => x.age),
-          datasets: [{
-            label: "rank vs count",
-            data: hist.raws.map((x) => [x.re74, x.re75, x.re78]),
-          }],
-        },
-        options: {
-          events: ['click'],
-          devicePixelRatio: 3.5,
-        },
-        plugins: [
-          {
-            id: "myeventer",
-            beforeEvent(chart: any, args: any, pluginOptions: any) {
-              const event = args.event;
-              console.log("event:", event, chart, args, pluginOptions);
-            }
+
+      const gen_bar = function(opts: any, labels: (string|number)[], data: number[]) {
+        return {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "rank vs count",
+              data: data,
+            }],
           },
-        ],
+          options: {
+            events: ['click'],
+            devicePixelRatio: 1.5,
+          },
+          plugins: [
+            {
+              id: "myeventer",
+              beforeEvent(chart: any, args: any, pluginOptions: any) {
+                const event = args.event;
+                console.log("event:", event, chart, args, pluginOptions);
+              }
+            },
+          ],
+          ...opts,
+        }
+      }
+
+      const age = gen_bar({}, hist.raws.age.map((x) => x.key), hist.raws.age.map((x) => x.count))
+      const black = gen_bar({
+        options: {
+          scales: {
+            x: { stacked: true, },
+            y: { stacked: true, },
+          }
+        }
+      }, hist.raws.black.map((x) => x.key), hist.raws.black.map((x) => x.count))
+
+
+      return {
+        age,
+        black,
       }
     },
   })
