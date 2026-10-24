@@ -44,3 +44,6 @@ __screenshots__/
 Thumbs.db
 
 /on_loop.lock
+
+*storybook.log
+storybook-static

@@ -1,4 +1,4 @@
-FROM node:24.21.0-trixie
+FROM node:24.22.1-trixie
 ARG UID=2000
 ARG GID=2000
 
